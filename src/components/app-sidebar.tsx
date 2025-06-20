@@ -12,10 +12,13 @@ import {
   IconFolder,
   IconHelp,
   IconInnerShadowTop,
+  IconKey,
   IconListDetails,
+  IconPlayerPlay,
   IconReport,
   IconSearch,
   IconSettings,
+  IconSitemap,
   IconUsers,
 } from "@tabler/icons-react"
 
@@ -42,8 +45,23 @@ const data = {
   navMain: [
     {
       title: "Dashboard",
-      url: "#",
+      url: "/dashboard",
       icon: IconDashboard,
+    },
+    {
+      title: "Workflows",
+      url: "/workflows",
+      icon: IconSitemap,
+    },
+    {
+      title: "Credentials",
+      url: "/credentials",
+      icon: IconKey,
+    },
+    {
+      title: "Executions",
+      url: "/executions",
+      icon: IconPlayerPlay,
     },
     {
       title: "Lifecycle",
