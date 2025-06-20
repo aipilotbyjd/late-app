@@ -43,9 +43,15 @@ export function RegisterForm({ className, ...props }: React.ComponentPropsWithou
                 <span className="relative z-10 bg-background px-2 text-muted-foreground">Or continue with</span>
               </div>
               <div className="grid gap-6">
-                <div className="grid gap-2">
-                  <Label htmlFor="name">Full name</Label>
-                  <Input id="name" type="text" placeholder="John Doe" required />
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="grid gap-2">
+                    <Label htmlFor="first-name">First name</Label>
+                    <Input id="first-name" placeholder="John" required />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="last-name">Last name</Label>
+                    <Input id="last-name" placeholder="Doe" required />
+                  </div>
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor="email">Email</Label>
