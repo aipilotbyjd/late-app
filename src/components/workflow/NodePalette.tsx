@@ -20,6 +20,11 @@ interface NodePaletteProps {
   onAddNode: (nodeType: string, position: { x: number; y: number }) => void;
 }
 
+const onDragStart = (event: React.DragEvent, nodeType: string) => {
+  event.dataTransfer.setData('application/reactflow', nodeType);
+  event.dataTransfer.effectAllowed = 'move';
+};
+
 const NodePalette: React.FC<NodePaletteProps> = ({ onAddNode }) => {
   const nodeTypes = [
     { type: 'trigger', label: 'Trigger', icon: Zap, color: 'bg-green-500', description: 'Start workflow' },

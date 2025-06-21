@@ -1,14 +1,16 @@
+export interface WorkflowNodeData {
+  label: string;
+  type: string;
+  parameters: Record<string, any>;
+  status?: 'idle' | 'running' | 'success' | 'error';
+  executionTime?: number;
+}
 
 export interface WorkflowNode {
   id: string;
   type: string;
   position: { x: number; y: number };
-  data: {
-    label: string;
-    parameters: Record<string, any>;
-    status?: 'idle' | 'running' | 'success' | 'error';
-    executionTime?: number;
-  };
+  data: WorkflowNodeData;
   selected?: boolean;
   group?: string;
 }
