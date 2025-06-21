@@ -113,7 +113,7 @@ const AdvancedWorkflowCanvas = forwardRef<HTMLDivElement, AdvancedWorkflowCanvas
   const handleDragLeave = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    
+
     // Only set drag over to false if we're leaving the canvas container
     if (e.currentTarget === e.target) {
       setIsDragOver(false);
@@ -124,31 +124,36 @@ const AdvancedWorkflowCanvas = forwardRef<HTMLDivElement, AdvancedWorkflowCanvas
     e.preventDefault();
     e.stopPropagation();
     setIsDragOver(false);
-    
-    console.log('Drop event triggered');
-    
-    const nodeType = e.dataTransfer.getData('application/reactflow');
-    console.log('Retrieved node type from drag data:', nodeType);
-    
-    if (nodeType && canvasRef.current) {
+
+    if (!canvasRef.current) return;
+
+    // Try to get the node type from different data types for better compatibility
+    let nodeType = e.dataTransfer.getData('application/reactflow');
+
+    // If no data found, try text/plain as fallback
+    if (!nodeType) {
+      nodeType = e.dataTransfer.getData('text/plain');
+    }
+
+    if (nodeType) {
       const rect = canvasRef.current.getBoundingClientRect();
       console.log('Canvas bounds:', rect);
       console.log('Drop coordinates (client):', { x: e.clientX, y: e.clientY });
       console.log('Current viewport:', viewport);
-      
+
       // Calculate position relative to canvas in screen coordinates
       const canvasX = e.clientX - rect.left;
       const canvasY = e.clientY - rect.top;
-      
+
       // Transform to world coordinates accounting for zoom and pan
       const worldX = (canvasX - viewport.x) / viewport.zoom;
       const worldY = (canvasY - viewport.y) / viewport.zoom;
-      
+
       const position = {
         x: worldX,
         y: worldY
       };
-      
+
       console.log('Final calculated position:', position);
       onAddNode(nodeType, position);
     } else {
@@ -205,9 +210,9 @@ const AdvancedWorkflowCanvas = forwardRef<HTMLDivElement, AdvancedWorkflowCanvas
         x: (clientX - viewport.x) / viewport.zoom - dragOffset.x,
         y: (clientY - viewport.y) / viewport.zoom - dragOffset.y
       };
-      
+
       onNodeUpdate(draggedNode.id, { position: newPosition });
-      
+
       if (selectedNodes.includes(draggedNode.id) && selectedNodes.length > 1) {
         selectedNodes.forEach(nodeId => {
           if (nodeId !== draggedNode.id) {
@@ -229,22 +234,22 @@ const AdvancedWorkflowCanvas = forwardRef<HTMLDivElement, AdvancedWorkflowCanvas
   const handleMouseUp = useCallback(() => {
     setIsPanning(false);
     setDraggedNode(null);
-    
+
     if (selectionBox) {
       const minX = Math.min(selectionBox.start.x, selectionBox.end.x);
       const maxX = Math.max(selectionBox.start.x, selectionBox.end.x);
       const minY = Math.min(selectionBox.start.y, selectionBox.end.y);
       const maxY = Math.max(selectionBox.start.y, selectionBox.end.y);
-      
+
       const selectedNodeIds = nodes
-        .filter(node => 
-          node.position.x >= minX && 
-          node.position.x <= maxX && 
-          node.position.y >= minY && 
+        .filter(node =>
+          node.position.x >= minX &&
+          node.position.x <= maxX &&
+          node.position.y >= minY &&
           node.position.y <= maxY
         )
         .map(node => node.id);
-      
+
       onNodeSelect(selectedNodeIds);
       setSelectionBox(null);
     }
@@ -257,22 +262,22 @@ const AdvancedWorkflowCanvas = forwardRef<HTMLDivElement, AdvancedWorkflowCanvas
 
     const clientX = e.clientX - rect.left;
     const clientY = e.clientY - rect.top;
-    
+
     const zoomFactor = e.deltaY > 0 ? 0.9 : 1.1;
     const newZoom = Math.max(0.1, Math.min(3, viewport.zoom * zoomFactor));
-    
+
     const newViewport = {
       x: clientX - (clientX - viewport.x) * (newZoom / viewport.zoom),
       y: clientY - (clientY - viewport.y) * (newZoom / viewport.zoom),
       zoom: newZoom
     };
-    
+
     onViewportChange(newViewport);
   }, [viewport, onViewportChange]);
 
   const handleNodeMouseDown = useCallback((e: React.MouseEvent, node: WorkflowNodeType) => {
     e.stopPropagation();
-    
+
     const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
     const canvasRect = canvasRef.current?.getBoundingClientRect();
     if (!canvasRect) return;
@@ -282,7 +287,7 @@ const AdvancedWorkflowCanvas = forwardRef<HTMLDivElement, AdvancedWorkflowCanvas
       y: (e.clientY - canvasRect.top - viewport.y) / viewport.zoom - node.position.y
     });
     setDraggedNode(node);
-    
+
     if (!selectedNodes.includes(node.id)) {
       onNodeSelect([node.id], e.ctrlKey || e.metaKey);
     }
@@ -292,7 +297,7 @@ const AdvancedWorkflowCanvas = forwardRef<HTMLDivElement, AdvancedWorkflowCanvas
     if (selectedNodes.length < 2) return;
 
     const selectedNodeObjects = nodes.filter(n => selectedNodes.includes(n.id));
-    
+
     switch (direction) {
       case 'left':
         const minX = Math.min(...selectedNodeObjects.map(n => n.position.x));
@@ -348,19 +353,17 @@ const AdvancedWorkflowCanvas = forwardRef<HTMLDivElement, AdvancedWorkflowCanvas
 
       <div
         ref={canvasRef}
-        className={`flex-1 relative overflow-hidden ${
-          canvasMode === 'pan' ? 'cursor-move' : 'cursor-default'
-        } ${isDragOver ? 'bg-blue-50 border-2 border-dashed border-blue-300' : ''}`}
-        onDrop={handleDrop}
-        onDragOver={handleDragOver}
-        onDragEnter={handleDragEnter}
-        onDragLeave={handleDragLeave}
+        className={`flex-1 h-full overflow-hidden ${isDragOver ? 'ring-2 ring-blue-500' : ''}`}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
-        onWheel={handleWheel}
+        onMouseLeave={handleMouseUp}
+        onDragOver={handleDragOver}
+        onDragEnter={handleDragEnter}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
         style={{
-          backgroundImage: showGrid 
+          backgroundImage: showGrid
             ? `radial-gradient(circle, #e2e8f0 1px, transparent 1px)`
             : 'none',
           backgroundSize: showGrid ? `${20 * viewport.zoom}px ${20 * viewport.zoom}px` : 'auto',
@@ -399,9 +402,9 @@ const AdvancedWorkflowCanvas = forwardRef<HTMLDivElement, AdvancedWorkflowCanvas
             {connections.map(connection => {
               const sourceNode = nodes.find(n => n.id === connection.sourceId);
               const targetNode = nodes.find(n => n.id === connection.targetId);
-              
+
               if (!sourceNode || !targetNode) return null;
-              
+
               return (
                 <ConnectionLine
                   key={connection.id}
