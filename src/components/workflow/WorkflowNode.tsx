@@ -88,8 +88,8 @@ const WorkflowNode: React.FC<WorkflowNodeProps> = ({
     >
       <Card
         className={`w-48 bg-white shadow-lg transition-all duration-200 cursor-move ${isSelected
-            ? 'ring-2 ring-blue-500 shadow-xl scale-105'
-            : 'hover:shadow-xl hover:scale-102'
+          ? 'ring-2 ring-blue-500 shadow-xl scale-105'
+          : 'hover:shadow-xl hover:scale-102'
           } ${isConnectingToThis ? 'ring-2 ring-purple-500' : ''}`}
         onMouseDown={onMouseDown}
       >
@@ -97,8 +97,8 @@ const WorkflowNode: React.FC<WorkflowNodeProps> = ({
         {node.type !== 'trigger' && (
           <div
             className={`absolute -left-2 top-1/2 transform -translate-y-1/2 w-4 h-4 bg-white border-2 rounded-full cursor-pointer transition-all z-10 ${canConnect && !connecting.isOutput
-                ? 'border-green-500 scale-110'
-                : 'border-slate-300 hover:border-blue-500'
+              ? 'border-green-500 scale-110'
+              : 'border-slate-300 hover:border-blue-500'
               }`}
             onClick={handleInputClick}
           >
@@ -109,8 +109,8 @@ const WorkflowNode: React.FC<WorkflowNodeProps> = ({
         {/* Output Connection Point */}
         <div
           className={`absolute -right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 bg-white border-2 rounded-full cursor-pointer transition-all z-10 ${canConnect && connecting.isOutput
-              ? 'border-green-500 scale-110'
-              : 'border-slate-300 hover:border-blue-500'
+            ? 'border-green-500 scale-110'
+            : 'border-slate-300 hover:border-blue-500'
             }`}
           onClick={handleOutputClick}
         >
