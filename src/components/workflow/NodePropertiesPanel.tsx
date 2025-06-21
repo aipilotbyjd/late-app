@@ -32,6 +32,7 @@ import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { WorkflowNodeData } from '@/types/workflow';
+import { motion, AnimatePresence } from 'framer-motion';
 
 // Node type icons mapping
 interface NodePropertiesPanelProps {
@@ -486,141 +487,131 @@ const NodePropertiesPanel: React.FC<NodePropertiesPanelProps> = ({
 
   if (!selectedNode) {
     return (
-      <div className="w-80 bg-white border-l border-slate-200 flex flex-col h-full">
-        <div className="p-4 border-b border-slate-200 bg-slate-50">
-          <h2 className="text-sm font-medium text-slate-800 uppercase tracking-wider">Node Properties</h2>
-        </div>
-        <div className="flex-1 flex flex-col items-center justify-center p-8 bg-white">
-          <div className="text-center text-slate-400">
-            <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Settings className="w-8 h-8 text-slate-400" />
-            </div>
-            <h3 className="text-sm font-medium text-slate-500 mb-1">No node selected</h3>
-            <p className="text-xs text-slate-400">Click on a node to configure its properties</p>
-          </div>
-        </div>
-      </div>
+      <motion.div
+        className="w-80 bg-white shadow-lg p-6 flex flex-col items-center justify-center h-full border-l border-gray-200"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.3 }}
+      >
+        <AlertCircle className="w-10 h-10 text-gray-400 mb-2" />
+        <p className="text-gray-600 text-center text-sm">No node selected</p>
+        <p className="text-gray-500 text-center text-xs mt-1">Select a node to view and edit its properties</p>
+      </motion.div>
     );
   }
 
   return (
-    <div className="w-80 bg-white border-l border-slate-200 flex flex-col h-full">
-      {/* Header */}
-      <div className="p-3 border-b border-slate-200 flex items-center justify-between bg-slate-50">
-        <div className="flex items-center space-x-2">
-          <div className={cn("p-1.5 rounded", statusColors[nodeStatus])}>
-            {nodeIcon}
-          </div>
-          <div>
-            <h2 className="text-sm font-medium text-slate-800">
-              {selectedNode.data.label || selectedNode.type}
-            </h2>
-            <div className="flex items-center">
-              <span className={cn(
-                'w-2 h-2 rounded-full mr-1',
-                nodeStatus === 'running' ? 'bg-blue-500' :
-                  nodeStatus === 'success' ? 'bg-green-500' :
-                    nodeStatus === 'error' ? 'bg-red-500' : 'bg-gray-400'
-              )}></span>
-              <span className="text-xs text-slate-500 capitalize">{nodeStatus}</span>
-            </div>
-          </div>
+    <motion.div
+      className="w-80 bg-gradient-to-b from-white to-gray-50 shadow-xl flex flex-col h-full border-l border-gray-200"
+      initial={{ x: 50, opacity: 0 }}
+      animate={{ x: 0, opacity: 1 }}
+      exit={{ x: 50, opacity: 0 }}
+      transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+    >
+      <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 bg-white">
+        <div className="flex items-center gap-2">
+          <motion.span
+            className="text-indigo-600"
+            whileHover={{ scale: 1.2 }}
+            whileTap={{ scale: 0.9 }}
+          >{nodeIcon}</motion.span>
+          <h3 className="font-medium text-gray-800 text-sm truncate max-w-[220px]">{nodeLabel || selectedNode.type || 'Unnamed Node'}</h3>
+          <Badge className={cn("ml-2", statusColors[nodeStatus])}>{nodeStatus}</Badge>
         </div>
-        <button
+        <motion.button
+          variant="ghost"
+          size="icon"
+          className="w-7 h-7 hover:bg-gray-100 rounded-full text-gray-600 hover:text-gray-800 transition-colors cursor-pointer"
           onClick={onClose}
-          className="text-slate-400 hover:text-slate-600"
-          aria-label="Close properties"
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9 }}
+          aria-label="Close properties panel"
         >
           <X className="w-4 h-4" />
-        </button>
+        </motion.button>
       </div>
 
-      {/* Tabs */}
-      <Tabs
-        defaultValue={Object.keys(nodeFields)[0] || 'settings'}
-        className="flex-1 flex flex-col h-0"
-        value={activeTab}
-        onValueChange={setActiveTab}
-      >
-        {hasMultipleTabs && (
-          <TabsList className="px-3 pt-2 pb-0 bg-transparent border-b border-slate-200 rounded-none h-10">
-            {Object.entries(nodeFields).map(([tabKey, tabContent]) => (
-              <TabsTrigger
-                key={tabKey}
-                value={tabKey}
-                className="text-xs px-3 py-1.5 h-8 data-[state=active]:shadow-[0_-1px_0_0,0_1px_0_0] data-[state=active]:shadow-blue-500 data-[state=active]:border-b-2 data-[state=active]:border-blue-500 data-[state=active]:bg-transparent rounded-none"
-              >
-                {tabKey.charAt(0).toUpperCase() + tabKey.slice(1)}
-              </TabsTrigger>
-            ))}
-          </TabsList>
-        )}
-
-        <div className="flex-1 overflow-y-auto p-4 space-y-6">
-          {/* Node Label */}
-          <div>
-            <Label className="text-xs font-medium text-slate-700 mb-1.5 block">Node Label</Label>
-            <Input
-              value={nodeLabel}
-              onChange={handleLabelChange}
-              placeholder="Enter a label for this node"
-              className="text-sm mb-4"
-            />
-
-            {/* Node Type */}
-            <div className="mb-4">
-              <Label className="text-xs font-medium text-slate-700 mb-1.5 block">Node Type</Label>
-              <div className="text-sm text-slate-900 bg-slate-100 px-3 py-2 rounded-md">
-                {selectedNode.type}
-              </div>
-            </div>
-
-            {/* Node Configuration */}
-            {Object.entries(nodeFields).map(([tabKey, tabContent]) => (
-              <TabsContent key={tabKey} value={tabKey} className="space-y-4">
-                {Object.entries(tabContent as Record<string, any>).map(([fieldKey, fieldConfig]) => (
-                  <React.Fragment key={fieldKey}>
-                    {renderField(fieldKey, fieldConfig)}
-                  </React.Fragment>
-                ))}
-              </TabsContent>
-            ))}
+      <div className="flex-1 overflow-y-auto custom-scrollbar">
+        <div className="px-4 pt-4 pb-6 space-y-5">
+          <div className="space-y-3">
+            <Label className="text-xs font-medium text-gray-700 px-1">Node Name</Label>
+            <motion.div
+              whileFocus={{ borderColor: '#4F46E5', boxShadow: '0 0 0 2px rgba(79, 70, 229, 0.2)' }}
+            >
+              <Input
+                value={nodeLabel}
+                onChange={handleLabelChange}
+                placeholder="Enter node name"
+                className="text-sm h-9"
+              />
+            </motion.div>
           </div>
 
-          {/* Execution Status */}
-          <Card className="mt-6">
-            <CardHeader className="p-4 pb-2">
-              <CardTitle className="text-sm font-medium text-slate-800">Execution</CardTitle>
-            </CardHeader>
-            <CardContent className="p-4 pt-0">
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-slate-600">Status</span>
-                  <span className={cn(
-                    'px-2 py-1 rounded-full text-xs font-medium',
-                    selectedNode.data.status === 'success' ? 'bg-green-100 text-green-800' :
-                      selectedNode.data.status === 'error' ? 'bg-red-100 text-red-800' :
-                        selectedNode.data.status === 'running' ? 'bg-blue-100 text-blue-800' :
-                          'bg-slate-100 text-slate-800'
-                  )}>
-                    {selectedNode.data.status || 'idle'}
-                  </span>
+          {hasMultipleTabs ? (
+            <Tabs defaultValue={activeTab} value={activeTab} onValueChange={setActiveTab} className="w-full">
+              <TabsList className="grid w-full gap-2 bg-gray-50 border border-gray-200 rounded-lg p-1" style={{ gridTemplateColumns: `repeat(${Object.keys(nodeFields).length}, 1fr)` }}>
+                {Object.keys(nodeFields).map(tab => (
+                  <motion.div
+                    key={tab}
+                    whileHover={{ backgroundColor: 'rgba(0,0,0,0.05)' }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <TabsTrigger
+                      value={tab}
+                      className="text-xs data-[state=active]:bg-white data-[state=active]:shadow-sm rounded-md py-1.5 h-auto data-[state=active]:text-indigo-600 transition-colors"
+                    >
+                      {tab.charAt(0).toUpperCase() + tab.slice(1)}
+                    </TabsTrigger>
+                  </motion.div>
+                ))}
+              </TabsList>
+              <AnimatePresence mode="wait">
+                {Object.entries(nodeFields).map(([tab, fields]) => (
+                  <motion.div
+                    key={tab}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <TabsContent value={tab} className="space-y-4 mt-0">
+                      <div className="space-y-4">
+                        {Object.entries(fields).map(([fieldKey, fieldConfig]) => (
+                          <div key={fieldKey} className="space-y-3.5">
+                            {renderField(fieldKey, fieldConfig)}
+                          </div>
+                        ))}
+                      </div>
+                    </TabsContent>
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+            </Tabs>
+          ) : (
+            <div className="space-y-4 pt-2">
+              {Object.entries(nodeFields.settings || {}).map(([fieldKey, fieldConfig]) => (
+                <div key={fieldKey} className="space-y-3.5">
+                  {renderField(fieldKey, fieldConfig)}
                 </div>
-
-                {selectedNode.data.executionTime && (
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-slate-600">Execution Time</span>
-                    <span className="text-sm font-mono text-slate-900">
-                      {Math.round(selectedNode.data.executionTime)}ms
-                    </span>
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+              ))}
+            </div>
+          )}
         </div>
-      </Tabs>
-    </div>
+      </div>
+
+      <div className="p-4 border-t border-gray-200 bg-white flex justify-end">
+        <motion.button
+          size="sm"
+          onClick={handleSave}
+          disabled={isSaving}
+          className="bg-indigo-600 hover:bg-indigo-700 text-white hover:shadow-md transition-all duration-200 px-4 py-2 rounded-md"
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+        >
+          {isSaving ? 'Saving...' : 'Save Changes'}
+        </motion.button>
+      </div>
+    </motion.div>
   );
 };
 

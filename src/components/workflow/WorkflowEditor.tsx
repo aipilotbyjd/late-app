@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useCallback, useRef, useMemo } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Play, Save, Map, Grid, Zap, Search, Settings, HelpCircle, Bell, User, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
@@ -117,57 +118,102 @@ const WorkflowEditor = () => {
   }), []);
 
   return (
-    <div className="h-screen flex flex-col bg-gray-50">
-      <div className="bg-white border-b border-gray-200 h-12 flex items-center px-4 shrink-0">
+    <motion.div 
+      className="h-screen flex flex-col bg-gradient-to-b from-gray-50 to-gray-100"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.5 }}
+    >
+      <motion.div 
+        className="bg-white border-b border-gray-200 h-12 flex items-center px-4 shrink-0 shadow-sm"
+        initial={{ y: -20 }}
+        animate={{ y: 0 }}
+        transition={{ type: 'spring', stiffness: 300, damping: 30, delay: 0.2 }}
+      >
         <div className="flex items-center space-x-6">
-          <div className="flex items-center space-x-2">
+          <motion.div 
+            className="flex items-center space-x-2"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+          >
             <div className="w-7 h-7 bg-gradient-to-br from-blue-600 to-blue-800 rounded-md flex items-center justify-center">
               <Zap className="w-4 h-4 text-white" />
             </div>
             <h1 className="text-base font-semibold text-gray-900">n8n</h1>
-          </div>
-          <div className="flex items-center space-x-1 text-sm font-medium text-gray-600 cursor-pointer">
+          </motion.div>
+          <motion.div 
+            className="flex items-center space-x-1 text-sm font-medium text-gray-600 cursor-pointer"
+            whileHover={{ color: '#4F46E5' }}
+            whileTap={{ scale: 0.95 }}
+          >
             <span>Workflows</span>
             <ChevronDown className="w-4 h-4" />
-          </div>
-          <div className="flex items-center space-x-1 text-sm font-medium text-gray-600 cursor-pointer">
+          </motion.div>
+          <motion.div 
+            className="flex items-center space-x-1 text-sm font-medium text-gray-600 cursor-pointer"
+            whileHover={{ color: '#4F46E5' }}
+            whileTap={{ scale: 0.95 }}
+          >
             <span>Executions</span>
-          </div>
+          </motion.div>
         </div>
 
         <div className="ml-auto flex items-center space-x-4">
-          <Button onClick={executeWorkflow} disabled={isExecuting} className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-3 h-8">
-            <Play className="w-4 h-4 mr-2" />
-            {isExecuting ? 'Executing...' : 'Execute'}
-          </Button>
-          <Button onClick={saveWorkflow} variant="outline" className="text-sm font-medium px-3 h-8 border-gray-300">
-            <Save className="w-4 h-4 mr-2" />
-            Save
-          </Button>
+          <motion.div
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            <Button onClick={executeWorkflow} disabled={isExecuting} className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-3 h-8">
+              <Play className="w-4 h-4 mr-2" />
+              {isExecuting ? 'Executing...' : 'Execute'}
+            </Button>
+          </motion.div>
+          <motion.div
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            <Button onClick={saveWorkflow} variant="outline" className="text-sm font-medium px-3 h-8 border-gray-300">
+              <Save className="w-4 h-4 mr-2" />
+              Save
+            </Button>
+          </motion.div>
           <div className="flex items-center space-x-1">
-            <Button variant="ghost" size="icon" className="w-8 h-8 text-gray-600 hover:bg-gray-100"><Settings className="w-4 h-4" /></Button>
-            <Button variant="ghost" size="icon" className="w-8 h-8 text-gray-600 hover:bg-gray-100"><HelpCircle className="w-4 h-4" /></Button>
-            <Button variant="ghost" size="icon" className="w-8 h-8 text-gray-600 hover:bg-gray-100 relative">
-              <Bell className="w-4 h-4" />
-              <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-            </Button>
+            <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+              <Button variant="ghost" size="icon" className="w-8 h-8 text-gray-600 hover:bg-gray-100"><Settings className="w-4 h-4" /></Button>
+            </motion.div>
+            <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+              <Button variant="ghost" size="icon" className="w-8 h-8 text-gray-600 hover:bg-gray-100"><HelpCircle className="w-4 h-4" /></Button>
+            </motion.div>
+            <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+              <Button variant="ghost" size="icon" className="w-8 h-8 text-gray-600 hover:bg-gray-100 relative">
+                <Bell className="w-4 h-4" />
+                <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+              </Button>
+            </motion.div>
             <div className="w-px h-6 bg-gray-200 mx-1"></div>
-            <Button variant="ghost" className="h-8 px-2 text-sm font-medium text-gray-700 hover:bg-gray-100">
-              <div className="w-6 h-6 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xs font-semibold mr-2">U</div>
-              User
-              <ChevronDown className="w-4 h-4 ml-1" />
-            </Button>
+            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+              <Button variant="ghost" className="h-8 px-2 text-sm font-medium text-gray-700 hover:bg-gray-100">
+                <div className="w-6 h-6 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xs font-semibold mr-2">U</div>
+                User
+                <ChevronDown className="w-4 h-4 ml-1" />
+              </Button>
+            </motion.div>
           </div>
         </div>
-      </div>
+      </motion.div>
 
       <div className="flex-1 flex overflow-hidden">
         <ReactFlowProvider>
-          <div className="w-72 bg-white border-r border-gray-200 flex flex-col h-full">
+          <motion.div 
+            className="w-72 bg-white border-r border-gray-200 flex flex-col h-full"
+            initial={{ x: -50, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            transition={{ type: 'spring', stiffness: 300, damping: 30, delay: 0.3 }}
+          >
             <div className="flex-1 overflow-y-auto">
               <NodePalette onAddNode={addNode} />
             </div>
-          </div>
+          </motion.div>
 
           <div className="flex-1 relative" ref={reactFlowWrapper}>
             <ReactFlow
@@ -179,7 +225,7 @@ const WorkflowEditor = () => {
               nodeTypes={nodeTypes}
               defaultEdgeOptions={defaultEdgeOptions}
               fitView
-              className="bg-gray-50"
+              className="bg-gradient-to-b from-gray-50 to-gray-200"
               onInit={setReactFlowInstance}
               onDrop={onDrop}
               onDragOver={onDragOver}
@@ -205,24 +251,45 @@ const WorkflowEditor = () => {
                 />
               )}
             </ReactFlow>
-            <div className="absolute top-3 left-3 z-10 flex space-x-2">
-              <Button variant="outline" size="sm" className="h-8 px-2 text-xs font-medium bg-white/80 backdrop-blur-sm" onClick={() => setShowGrid(!showGrid)}>
-                <Grid className="w-3.5 h-3.5 mr-1.5" />
-                {showGrid ? 'Hide Grid' : 'Show Grid'}
-              </Button>
-              <Button variant="outline" size="sm" className="h-8 px-2 text-xs font-medium bg-white/80 backdrop-blur-sm" onClick={() => setShowMinimap(!showMinimap)}>
-                <Map className="w-3.5 h-3.5 mr-1.5" />
-                {showMinimap ? 'Hide Minimap' : 'Show Minimap'}
-              </Button>
-            </div>
+            <motion.div 
+              className="absolute top-3 left-3 z-10 flex space-x-2"
+              initial={{ y: -20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 30, delay: 0.4 }}
+            >
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                <Button variant="outline" size="sm" className="h-8 px-2 text-xs font-medium bg-white/80 backdrop-blur-sm" onClick={() => setShowGrid(!showGrid)}>
+                  <Grid className="w-3.5 h-3.5 mr-1.5" />
+                  {showGrid ? 'Hide Grid' : 'Show Grid'}
+                </Button>
+              </motion.div>
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                <Button variant="outline" size="sm" className="h-8 px-2 text-xs font-medium bg-white/80 backdrop-blur-sm" onClick={() => setShowMinimap(!showMinimap)}>
+                  <Map className="w-3.5 h-3.5 mr-1.5" />
+                  {showMinimap ? 'Hide Minimap' : 'Show Minimap'}
+                </Button>
+              </motion.div>
+            </motion.div>
           </div>
 
-          <div className="w-80 bg-white border-l border-gray-200 flex flex-col h-full overflow-hidden">
-            <NodePropertiesPanel selectedNode={selectedNode} onUpdateNode={onUpdateNode} onClose={() => {}} />
-          </div>
+          <AnimatePresence>
+            {selectedNode && (
+              <motion.div 
+                className="w-80 bg-white border-l border-gray-200 flex flex-col h-full overflow-hidden"
+                initial={{ x: 50, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                exit={{ x: 50, opacity: 0 }}
+                transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+              >
+                <NodePropertiesPanel selectedNode={selectedNode} onUpdateNode={onUpdateNode} onClose={() => {
+                  setNodes(nodes.map(n => ({ ...n, selected: false })));
+                }} />
+              </motion.div>
+            )}
+          </AnimatePresence>
         </ReactFlowProvider>
       </div>
-    </div>
+    </motion.div>
   );
 };
 
