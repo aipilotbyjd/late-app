@@ -18,6 +18,7 @@ import ReactFlow, {
   Connection,
   Edge,
   Node,
+  MarkerType,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import NodePropertiesPanel from './NodePropertiesPanel';
@@ -103,18 +104,116 @@ const WorkflowEditor = () => {
   );
 
   const executeWorkflow = useCallback(async () => {
-    // Placeholder for execution logic
-  }, []);
+    setIsExecuting(true);
+    try {
+      // Simulate workflow execution
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // Update node statuses
+      setNodes((nds) =>
+        nds.map((node, index) => {
+          // Simulate sequential execution with delays
+          const delay = index * 500;
+          setTimeout(() => {
+            setNodes(innerNds => 
+              innerNds.map(innerNode => {
+                if (innerNode.id === node.id) {
+                  return { 
+                    ...innerNode, 
+                    data: { 
+                      ...innerNode.data, 
+                      status: 'running' 
+                    } 
+                  };
+                }
+                return innerNode;
+              })
+            );
+            
+            setTimeout(() => {
+              setNodes(innerNds => 
+                innerNds.map(innerNode => {
+                  if (innerNode.id === node.id) {
+                    return { 
+                      ...innerNode, 
+                      data: { 
+                        ...innerNode.data, 
+                        status: 'success',
+                        executionTime: Math.floor(Math.random() * 1000) + 500
+                      } 
+                    };
+                  }
+                  return innerNode;
+                })
+              );
+            }, 1000);
+          }, delay);
+          
+          return node;
+        })
+      );
+      
+      toast({ title: "Workflow Executed", description: "The workflow has been successfully executed." });
+    } catch (error) {
+      toast({ title: "Execution Failed", description: "There was an error executing the workflow." });
+      
+      // Mark a random node as failed for demonstration
+      const randomNodeIndex = Math.floor(Math.random() * nodes.length);
+      setNodes((nds) =>
+        nds.map((node, index) => {
+          if (index === randomNodeIndex) {
+            return { 
+              ...node, 
+              data: { 
+                ...node.data, 
+                status: 'error',
+                executionTime: Math.floor(Math.random() * 500) + 100
+              } 
+            };
+          }
+          return node;
+        })
+      );
+    } finally {
+      setTimeout(() => {
+        setIsExecuting(false);
+      }, 2000 + nodes.length * 500);
+    }
+  }, [nodes, setNodes, toast]);
 
   const saveWorkflow = useCallback(() => {
-    // Placeholder for save logic
-  }, []);
+    try {
+      // Simulate saving workflow data to local storage or a backend
+      const workflowData = {
+        nodes: nodes.map(node => ({
+          id: node.id,
+          type: node.type,
+          position: node.position,
+          data: node.data
+        })),
+        edges: edges.map(edge => ({
+          id: edge.id,
+          source: edge.source,
+          target: edge.target,
+          type: edge.type
+        })) 
+      };
+      
+      // Store in localStorage for demonstration
+      localStorage.setItem('workflowData', JSON.stringify(workflowData));
+      
+      toast({ title: "Workflow Saved", description: "The workflow has been successfully saved." });
+    } catch (error) {
+      toast({ title: "Save Failed", description: "There was an error saving the workflow." });
+      console.error("Error saving workflow:", error);
+    }
+  }, [nodes, edges, toast]);
 
   const defaultEdgeOptions = useMemo(() => ({
     animated: true,
     type: 'smoothstep',
     style: { strokeWidth: 2, stroke: '#9CA3AF' },
-    markerEnd: { type: 'arrowclosed', color: '#9CA3AF', width: 14, height: 14, strokeWidth: 1.5 },
+    markerEnd: { type: MarkerType.ArrowClosed },
   }), []);
 
   return (
