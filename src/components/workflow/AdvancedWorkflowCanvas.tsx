@@ -1,3 +1,5 @@
+'use client';
+
 import React, { forwardRef, useCallback, useState, useRef, useEffect } from 'react';
 import { Plus, MousePointer, Move, Square, Trash2, Copy, AlignLeft, Grid3X3 } from 'lucide-react';
 import { Button } from '@/components/ui/button';

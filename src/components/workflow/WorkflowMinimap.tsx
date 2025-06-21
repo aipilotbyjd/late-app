@@ -1,5 +1,6 @@
+'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { WorkflowNode } from '@/types/workflow';
 
@@ -14,6 +15,15 @@ const WorkflowMinimap: React.FC<WorkflowMinimapProps> = ({
   viewport,
   onViewportChange
 }) => {
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  if (!isMounted) {
+    return null; // Or return a loading state
+  }
   const minimapWidth = 200;
   const minimapHeight = 150;
   const scale = 0.1;

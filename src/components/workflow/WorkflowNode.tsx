@@ -1,3 +1,4 @@
+'use client';
 
 import React from 'react';
 import { X, Circle } from 'lucide-react';
@@ -86,21 +87,19 @@ const WorkflowNode: React.FC<WorkflowNodeProps> = ({
       }}
     >
       <Card
-        className={`w-48 bg-white shadow-lg transition-all duration-200 cursor-move ${
-          isSelected 
-            ? 'ring-2 ring-blue-500 shadow-xl scale-105' 
+        className={`w-48 bg-white shadow-lg transition-all duration-200 cursor-move ${isSelected
+            ? 'ring-2 ring-blue-500 shadow-xl scale-105'
             : 'hover:shadow-xl hover:scale-102'
-        } ${isConnectingToThis ? 'ring-2 ring-purple-500' : ''}`}
+          } ${isConnectingToThis ? 'ring-2 ring-purple-500' : ''}`}
         onMouseDown={onMouseDown}
       >
         {/* Input Connection Point */}
         {node.type !== 'trigger' && (
           <div
-            className={`absolute -left-2 top-1/2 transform -translate-y-1/2 w-4 h-4 bg-white border-2 rounded-full cursor-pointer transition-all z-10 ${
-              canConnect && !connecting.isOutput 
-                ? 'border-green-500 scale-110' 
+            className={`absolute -left-2 top-1/2 transform -translate-y-1/2 w-4 h-4 bg-white border-2 rounded-full cursor-pointer transition-all z-10 ${canConnect && !connecting.isOutput
+                ? 'border-green-500 scale-110'
                 : 'border-slate-300 hover:border-blue-500'
-            }`}
+              }`}
             onClick={handleInputClick}
           >
             <Circle className="w-2 h-2 text-slate-400 absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2" />
@@ -109,11 +108,10 @@ const WorkflowNode: React.FC<WorkflowNodeProps> = ({
 
         {/* Output Connection Point */}
         <div
-          className={`absolute -right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 bg-white border-2 rounded-full cursor-pointer transition-all z-10 ${
-            canConnect && connecting.isOutput 
-              ? 'border-green-500 scale-110' 
+          className={`absolute -right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 bg-white border-2 rounded-full cursor-pointer transition-all z-10 ${canConnect && connecting.isOutput
+              ? 'border-green-500 scale-110'
               : 'border-slate-300 hover:border-blue-500'
-          }`}
+            }`}
           onClick={handleOutputClick}
         >
           <Circle className="w-2 h-2 text-slate-400 absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2" />
@@ -134,7 +132,7 @@ const WorkflowNode: React.FC<WorkflowNodeProps> = ({
                 </p>
               </div>
             </div>
-            
+
             {isSelected && (
               <Button
                 variant="ghost"

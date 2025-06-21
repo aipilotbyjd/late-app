@@ -1,3 +1,4 @@
+'use client';
 
 import React, { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
@@ -6,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { X, Settings, Info } from 'lucide-react';
-import { WorkflowNode } from '../types/workflow';
+import { WorkflowNode } from '@/types/workflow';
 
 interface NodePropertiesPanelProps {
   selectedNode: WorkflowNode | null;
@@ -171,25 +172,25 @@ const NodePropertiesPanel: React.FC<NodePropertiesPanelProps> = ({
                 placeholder="Enter node label"
               />
             </div>
-            
+
             <div className="space-y-2">
               <Label>Node ID</Label>
               <Input value={selectedNode.id} disabled className="bg-slate-50" />
             </div>
-            
+
             <div className="space-y-2">
               <Label>Position</Label>
               <div className="flex space-x-2">
-                <Input 
-                  value={Math.round(selectedNode.position.x)} 
-                  disabled 
-                  className="bg-slate-50" 
+                <Input
+                  value={Math.round(selectedNode.position.x)}
+                  disabled
+                  className="bg-slate-50"
                   placeholder="X"
                 />
-                <Input 
-                  value={Math.round(selectedNode.position.y)} 
-                  disabled 
-                  className="bg-slate-50" 
+                <Input
+                  value={Math.round(selectedNode.position.y)}
+                  disabled
+                  className="bg-slate-50"
                   placeholder="Y"
                 />
               </div>
@@ -213,16 +214,15 @@ const NodePropertiesPanel: React.FC<NodePropertiesPanelProps> = ({
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <span className="text-sm text-slate-600">Status</span>
-              <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                selectedNode.data.status === 'success' ? 'bg-green-100 text-green-800' :
+              <span className={`px-2 py-1 rounded-full text-xs font-medium ${selectedNode.data.status === 'success' ? 'bg-green-100 text-green-800' :
                 selectedNode.data.status === 'error' ? 'bg-red-100 text-red-800' :
-                selectedNode.data.status === 'running' ? 'bg-blue-100 text-blue-800' :
-                'bg-slate-100 text-slate-800'
-              }`}>
+                  selectedNode.data.status === 'running' ? 'bg-blue-100 text-blue-800' :
+                    'bg-slate-100 text-slate-800'
+                }`}>
                 {selectedNode.data.status || 'idle'}
               </span>
             </div>
-            
+
             {selectedNode.data.executionTime && (
               <div className="flex items-center justify-between">
                 <span className="text-sm text-slate-600">Execution Time</span>
