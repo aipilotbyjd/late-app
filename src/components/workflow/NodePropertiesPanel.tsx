@@ -31,12 +31,12 @@ import {
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { WorkflowNode } from '@/types/workflow';
+import { WorkflowNodeData } from '@/types/workflow';
 
 // Node type icons mapping
 interface NodePropertiesPanelProps {
-  selectedNode: WorkflowNode | null;
-  onUpdateNode: (nodeId: string, updates: Partial<WorkflowNode>) => void;
+  selectedNode: Node<WorkflowNodeData> | null;
+  onUpdateNode: (nodeId: string, updates: Partial<WorkflowNodeData>) => void;
   onClose?: () => void;
 }
 
@@ -92,17 +92,17 @@ const NodePropertiesPanel: React.FC<NodePropertiesPanelProps> = ({
   const handleLabelChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newLabel = e.target.value;
     setNodeLabel(newLabel);
-    onUpdateNode(selectedNode.id, {
-      data: { ...selectedNode.data, label: newLabel }
-    });
+    if (selectedNode) {
+      onUpdateNode(selectedNode.id, { label: newLabel });
+    }
   };
 
   const handleConfigChange = (key: string, value: any) => {
     const newConfig = { ...nodeConfig, [key]: value };
     setNodeConfig(newConfig);
-    onUpdateNode(selectedNode.id, {
-      data: { ...selectedNode.data, parameters: newConfig }
-    });
+    if (selectedNode) {
+      onUpdateNode(selectedNode.id, { parameters: newConfig });
+    }
   };
 
   const handleSave = async () => {

@@ -13,7 +13,7 @@ import {
 interface NodeType {
   type: string;
   label: string;
-  icon: React.ComponentType<{ className?: string }>;
+  icon: React.ElementType;
   color: string;
   description: string;
   category: string;
@@ -23,7 +23,7 @@ interface NodeType {
 interface NodeCategory {
   id: string;
   label: string;
-  icon: React.ComponentType<{ className?: string }>;
+  icon: React.ElementType;
   color: string;
 }
 
@@ -93,6 +93,15 @@ const nodeTypes: NodeType[] = [
     description: 'Query databases',
     category: 'data',
     tags: ['sql', 'nosql', 'query']
+  },
+  {
+    type: 'search',
+    label: 'Search',
+    icon: Search,
+    color: '#FF9F43',
+    description: 'Search and filter data collections',
+    category: 'data',
+    tags: ['find', 'lookup', 'query', 'search']
   },
   {
     type: 'code',
@@ -205,13 +214,7 @@ const NodeCategorySection: React.FC<{
 
 const NodePalette: React.FC<NodePaletteProps> = ({ onAddNode }) => {
   const [searchQuery, setSearchQuery] = useState('');
-  const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({
-    trigger: true,
-    core: true,
-    data: true,
-    transform: true,
-    automation: true,
-  });
+  const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({});
 
   const toggleCategory = (categoryId: string) => {
     setExpandedCategories(prev => ({
@@ -230,14 +233,18 @@ const NodePalette: React.FC<NodePaletteProps> = ({ onAddNode }) => {
     e.dataTransfer.setDragImage(dragImage, 50, 20);
   };
 
+  const uniqueNodeTypes = nodeTypes.filter((node, index, self) =>
+    index === self.findIndex((t) => t.type === node.type)
+  );
+
   // Filter nodes based on search query
   const filteredNodes = searchQuery
-    ? nodeTypes.filter(node =>
+    ? uniqueNodeTypes.filter(node =>
       node.label.toLowerCase().includes(searchQuery.toLowerCase()) ||
       node.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
       node.tags?.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))
     )
-    : nodeTypes;
+    : uniqueNodeTypes;
 
   // Group nodes by category
   const nodesByCategory = filteredNodes.reduce<Record<string, NodeType[]>>((acc, node) => {
@@ -248,8 +255,10 @@ const NodePalette: React.FC<NodePaletteProps> = ({ onAddNode }) => {
     return acc;
   }, {});
 
+  console.log('Available node types:', JSON.stringify(nodeTypes, null, 2));
+
   return (
-    <div className="w-64 h-full flex flex-col bg-white border-r border-gray-200">
+    <div className="w-full h-full flex flex-col bg-white border-r border-gray-200">
       <div className="p-3 border-b border-gray-200">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -263,7 +272,7 @@ const NodePalette: React.FC<NodePaletteProps> = ({ onAddNode }) => {
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto">
+      <div className="overflow-y-auto">
         {searchQuery ? (
           // Show all matching nodes in a flat list when searching
           <div className="p-2 space-y-1">
