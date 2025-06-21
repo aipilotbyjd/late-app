@@ -1,184 +1,89 @@
 'use client';
 
-import React, { useMemo } from 'react';
+import React, { memo } from 'react';
 import { Handle, Position, NodeProps } from 'reactflow';
-import { X, Zap, Clock, CheckCircle, AlertCircle, Pause, Play, Loader2 } from 'lucide-react';
-import { Card } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
-import { WorkflowNode as WorkflowNodeType } from '@/types/workflow';
+import { Trash2, Zap, Globe, Clock, Mail, Database, Code, Filter, GitMerge, Webhook, Settings } from 'lucide-react';
 
-interface WorkflowNodeProps extends NodeProps<WorkflowNodeType['data']> {
+const NODE_DETAILS: Record<string, { icon: React.ElementType; color: string }> = {
+  trigger: { icon: Zap, color: '#FF6B6B' },
+  webhook: { icon: Webhook, color: '#4D96FF' },
+  schedule: { icon: Clock, color: '#6C63FF' },
+  http: { icon: Globe, color: '#4D96FF' },
+  email: { icon: Mail, color: '#FF9F43' },
+  database: { icon: Database, color: '#28C76F' },
+  code: { icon: Code, color: '#EA5455' },
+  filter: { icon: Filter, color: '#00CFE8' },
+  merge: { icon: GitMerge, color: '#9C27B0' },
+  default: { icon: Settings, color: '#9CA3AF' },
+};
+
+interface WorkflowNodeProps extends NodeProps {
   deleteNode: (id: string) => void;
 }
 
-// Node type definitions with colors and icons
-const NODE_TYPES = {
-  trigger: {
-    color: '#FF6B6B',
-    icon: <Zap className="w-4 h-4" />,
-    label: 'Trigger',
-  },
-  webhook: {
-    color: '#4D96FF',
-    icon: <Zap className="w-4 h-4" />,
-    label: 'Webhook',
-  },
-  schedule: {
-    color: '#6C63FF',
-    icon: <Clock className="w-4 h-4" />,
-    label: 'Schedule',
-  },
-  http: {
-    color: '#4D96FF',
-    icon: <Zap className="w-4 h-4" />,
-    label: 'HTTP Request',
-  },
-  email: {
-    color: '#FF9F43',
-    icon: <Zap className="w-4 h-4" />,
-    label: 'Email',
-  },
-  database: {
-    color: '#28C76F',
-    icon: <Zap className="w-4 h-4" />,
-    label: 'Database',
-  },
-  code: {
-    color: '#EA5455',
-    icon: <Zap className="w-4 h-4" />,
-    label: 'Code',
-  },
-  filter: {
-    color: '#00CFE8',
-    icon: <Zap className="w-4 h-4" />,
-    label: 'Filter',
-  },
-  merge: {
-    color: '#9C27B0',
-    icon: <Zap className="w-4 h-4" />,
-    label: 'Merge',
-  },
-} as const;
+const WorkflowNode: React.FC<WorkflowNodeProps> = ({ data, id, deleteNode }) => {
+  const { type, label, status, executionTime } = data;
+  const { icon: Icon, color } = NODE_DETAILS[type] || NODE_DETAILS.default;
 
-const STATUS = {
-  idle: {
-    color: '#A0AEC0',
-    icon: <Pause className="w-3 h-3" />,
-    label: 'Idle',
-  },
-  running: {
-    color: '#4D96FF',
-    icon: <Loader2 className="w-3 h-3 animate-spin" />,
-    label: 'Running',
-  },
-  success: {
-    color: '#28C76F',
-    icon: <CheckCircle className="w-3 h-3" />,
-    label: 'Success',
-  },
-  error: {
-    color: '#EA5455',
-    icon: <AlertCircle className="w-3 h-3" />,
-    label: 'Error',
-  },
-} as const;
-
-const WorkflowNode: React.FC<WorkflowNodeProps> = ({ data, id, selected, deleteNode }) => {
-  const { type, label, status = 'idle', executionTime } = data;
-  const nodeType = NODE_TYPES[type as keyof typeof NODE_TYPES] || NODE_TYPES.trigger;
-  const nodeStatus = STATUS[status as keyof typeof STATUS] || STATUS.idle;
-
-  const handleDelete = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    deleteNode(id);
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'success': return 'bg-green-100 border-green-300 text-green-700 dark:bg-green-900 dark:text-green-200';
+      case 'error': return 'bg-red-100 border-red-300 text-red-700 dark:bg-red-900 dark:text-red-200';
+      case 'running': return 'bg-blue-100 border-blue-300 text-blue-700 dark:bg-blue-900 dark:text-blue-200';
+      default: return 'bg-gray-100 border-gray-300 text-gray-700 dark:bg-gray-800 dark:text-gray-200';
+    }
   };
 
   return (
-    <div className="relative">
-      {/* Input Connection Point */}
-      {type !== 'trigger' && (
-        <Handle
-          type="target"
-          position={Position.Left}
-          className="!w-2.5 !h-2.5 !border-2 !border-white !bg-gray-400"
-          style={{ left: -6 }}
-        />
-      )}
+    <div className={`w-64 shadow-md rounded-lg border-2 bg-white`} style={{ borderColor: color }}>
+      <Card className="border-0 rounded-lg overflow-hidden m-0 p-0 bg-transparent">
+        <CardHeader className="py-2 px-3 border-b flex flex-row items-center justify-between" style={{ borderColor: color, borderBottomWidth: '1px' }}>
+          <div className="flex items-center space-x-2">
+            <div className="w-8 h-8 rounded-md flex items-center justify-center" style={{ backgroundColor: `${color}20` }}>
+              <Icon className="w-4 h-4" style={{ color }} />
+            </div>
+            <CardTitle className="text-sm font-medium flex-1 truncate">{label}</CardTitle>
+          </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="w-7 h-7 hover:bg-gray-100 dark:hover:bg-slate-700"
+            onClick={() => deleteNode && deleteNode(id)}
+          >
+            <Trash2 className="w-3.5 h-3.5 text-gray-500 hover:text-red-500 dark:text-slate-400 dark:hover:text-red-400" />
+          </Button>
+        </CardHeader>
 
-      {/* Output Connection Point */}
+        <CardContent className="py-2 px-3 text-sm">
+          <div className="flex justify-between items-center text-xs text-gray-500">
+            <span>Status</span>
+            <Badge variant="outline" className={`text-xs ${getStatusColor(status)} border capitalize`}>
+              {status}
+            </Badge>
+          </div>
+          {executionTime && (
+            <div className="flex justify-between items-center text-xs text-gray-500 mt-2">
+              <span>Execution Time</span>
+              <span className="font-mono bg-gray-100 px-1.5 py-0.5 rounded">{Math.round(executionTime)}ms</span>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+      <Handle
+        type="target"
+        position={Position.Left}
+        className="w-3 h-3 rounded-full bg-gray-300 border-2 border-white dark:bg-slate-600 dark:border-slate-800"
+      />
       <Handle
         type="source"
         position={Position.Right}
-        className="!w-2.5 !h-2.5 !border-2 !border-white !bg-gray-400"
-        style={{ right: -6 }}
+        className="w-3 h-3 rounded-full bg-gray-300 border-2 border-white dark:bg-slate-600 dark:border-slate-800"
       />
-
-      <Card
-        className={cn(
-          'w-64 bg-white border border-gray-200 rounded-md shadow-sm transition-all duration-150',
-          'hover:shadow-md hover:border-gray-300',
-          selected && 'ring-2 ring-blue-500 ring-offset-1',
-        )}
-        style={{
-          borderTop: `3px solid ${nodeType.color}`,
-        }}
-      >
-        <div className="p-3">
-          <div className="flex items-start justify-between">
-            <div className="flex items-start space-x-2">
-              <div
-                className="w-7 h-7 rounded-md flex items-center justify-center flex-shrink-0 mt-0.5"
-                style={{ backgroundColor: `${nodeType.color}15` }}
-              >
-                {React.cloneElement(nodeType.icon, {
-                  className: cn('w-3.5 h-3.5', nodeType.icon.props.className),
-                  style: { color: nodeType.color }
-                })}
-              </div>
-              <div className="flex-1 min-w-0">
-                <h3 className="text-sm font-medium text-gray-900 truncate">
-                  {label || nodeType.label}
-                </h3>
-                <p className="text-xs text-gray-500 capitalize">
-                  {type}
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-center space-x-1">
-              {executionTime && (
-                <span className="text-xs font-mono bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded">
-                  {Math.round(executionTime)}ms
-                </span>
-              )}
-              <div
-                className="w-2.5 h-2.5 rounded-full flex items-center justify-center"
-                style={{ backgroundColor: `${nodeStatus.color}20` }}
-                title={nodeStatus.label}
-              >
-                {React.cloneElement(nodeStatus.icon, {
-                  className: 'w-2 h-2',
-                  style: { color: nodeStatus.color }
-                })}
-              </div>
-            </div>
-          </div>
-
-          {selected && (
-            <Button
-              variant="ghost"
-              size="icon"
-              className="w-6 h-6 absolute -top-3 -right-3 bg-white border border-gray-200 rounded-full p-0 hover:bg-red-50 hover:text-red-600 hover:border-red-200"
-              onClick={handleDelete}
-            >
-              <X className="w-3.5 h-3.5" />
-            </Button>
-          )}
-        </div>
-      </Card>
     </div>
   );
 };
 
-export default WorkflowNode;
+export default memo(WorkflowNode);

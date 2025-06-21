@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { 
+import {
   Zap, Globe, Clock, Mail, Database, Code, Filter, GitMerge, Webhook, Calendar,
   ChevronDown, ChevronRight, Search, GripVertical, Settings, FileText, Cloud,
   Cpu, Server, GitBranch, AlertCircle, Hash, List, Type, CheckSquare, Image as ImageIcon
@@ -123,9 +123,9 @@ const nodeTypes: NodeType[] = [
   },
 ];
 
-const NodeItem: React.FC<{ node: NodeType; onDragStart: (e: React.DragEvent, type: string) => void }> = ({ node, onDragStart }) => {
+const NodeItem: React.FC<{ node: NodeType; onDragStart: (e: React.DragEvent, type: string) => void; onAddNode: (nodeType: string, position: { x: number; y: number }) => void }> = ({ node, onDragStart, onAddNode }) => {
   const Icon = node.icon;
-  
+
   return (
     <div
       className={cn(
@@ -138,10 +138,10 @@ const NodeItem: React.FC<{ node: NodeType; onDragStart: (e: React.DragEvent, typ
       onDragStart={(e) => onDragStart(e, node.type)}
       onClick={() => {
         const position = { x: 400, y: 200 };
-        // onAddNode(node.type, position);
+        onAddNode(node.type, position);
       }}
     >
-      <div 
+      <div
         className="w-8 h-8 rounded-md flex items-center justify-center flex-shrink-0 mr-3"
         style={{ backgroundColor: `${node.color}15` }}
       >
@@ -156,15 +156,16 @@ const NodeItem: React.FC<{ node: NodeType; onDragStart: (e: React.DragEvent, typ
   );
 };
 
-const NodeCategorySection: React.FC<{ 
-  category: NodeCategory; 
+const NodeCategorySection: React.FC<{
+  category: NodeCategory;
   nodes: NodeType[];
   isExpanded: boolean;
   onToggle: (id: string) => void;
   onDragStart: (e: React.DragEvent, type: string) => void;
-}> = ({ category, nodes, isExpanded, onToggle, onDragStart }) => {
+  onAddNode: (nodeType: string, position: { x: number; y: number }) => void;
+}> = ({ category, nodes, isExpanded, onToggle, onDragStart, onAddNode }) => {
   const Icon = category.icon;
-  
+
   return (
     <div className="border-b border-gray-100 last:border-0">
       <button
@@ -176,7 +177,7 @@ const NodeCategorySection: React.FC<{
         onClick={() => onToggle(category.id)}
       >
         <div className="flex items-center">
-          <div 
+          <div
             className="w-6 h-6 rounded-md flex items-center justify-center mr-2"
             style={{ backgroundColor: `${category.color}15` }}
           >
@@ -190,11 +191,11 @@ const NodeCategorySection: React.FC<{
           <ChevronRight className="w-4 h-4 text-gray-400" />
         )}
       </button>
-      
+
       {isExpanded && (
         <div className="pb-2 px-1 space-y-1">
           {nodes.map((node) => (
-            <NodeItem key={node.type} node={node} onDragStart={onDragStart} />
+            <NodeItem key={node.type} node={node} onDragStart={onDragStart} onAddNode={onAddNode} />
           ))}
         </div>
       )}
@@ -231,11 +232,11 @@ const NodePalette: React.FC<NodePaletteProps> = ({ onAddNode }) => {
 
   // Filter nodes based on search query
   const filteredNodes = searchQuery
-    ? nodeTypes.filter(node => 
-        node.label.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        node.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        node.tags?.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))
-      )
+    ? nodeTypes.filter(node =>
+      node.label.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      node.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      node.tags?.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))
+    )
     : nodeTypes;
 
   // Group nodes by category
@@ -268,7 +269,7 @@ const NodePalette: React.FC<NodePaletteProps> = ({ onAddNode }) => {
           <div className="p-2 space-y-1">
             {filteredNodes.length > 0 ? (
               filteredNodes.map((node) => (
-                <NodeItem key={node.type} node={node} onDragStart={handleDragStart} />
+                <NodeItem key={node.type} node={node} onDragStart={handleDragStart} onAddNode={onAddNode} />
               ))
             ) : (
               <div className="p-4 text-center text-sm text-gray-500">
@@ -281,7 +282,7 @@ const NodePalette: React.FC<NodePaletteProps> = ({ onAddNode }) => {
           categories.map((category) => {
             const categoryNodes = nodesByCategory[category.id] || [];
             if (categoryNodes.length === 0) return null;
-            
+
             return (
               <NodeCategorySection
                 key={category.id}
@@ -290,6 +291,7 @@ const NodePalette: React.FC<NodePaletteProps> = ({ onAddNode }) => {
                 isExpanded={!!expandedCategories[category.id]}
                 onToggle={toggleCategory}
                 onDragStart={handleDragStart}
+                onAddNode={onAddNode}
               />
             );
           })

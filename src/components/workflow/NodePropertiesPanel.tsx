@@ -64,9 +64,9 @@ const NodePropertiesPanel: React.FC<NodePropertiesPanelProps> = ({
 }) => {
   const [nodeLabel, setNodeLabel] = useState('');
   const [nodeConfig, setNodeConfig] = useState<Record<string, any>>({});
-
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
   const [isSaving, setIsSaving] = useState(false);
+  const [activeTab, setActiveTab] = useState<string>('settings');
 
   useEffect(() => {
     if (selectedNode) {
@@ -75,24 +75,12 @@ const NodePropertiesPanel: React.FC<NodePropertiesPanelProps> = ({
     }
   }, [selectedNode]);
 
-  if (!selectedNode) {
-    return (
-      <div className="w-80 bg-white border-l border-slate-200 flex flex-col h-full">
-        <div className="p-4 border-b border-slate-200 bg-slate-50">
-          <h2 className="text-sm font-medium text-slate-800 uppercase tracking-wider">Node Properties</h2>
-        </div>
-        <div className="flex-1 flex flex-col items-center justify-center p-8 bg-white">
-          <div className="text-center text-slate-400">
-            <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Settings className="w-8 h-8 text-slate-400" />
-            </div>
-            <h3 className="text-sm font-medium text-slate-500 mb-1">No node selected</h3>
-            <p className="text-xs text-slate-400">Click on a node to configure its properties</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  useEffect(() => {
+    if (selectedNode) {
+      const firstTab = Object.keys(getNodeFields(selectedNode.type || '')).length > 0 ? Object.keys(getNodeFields(selectedNode.type || ''))[0] : 'settings';
+      setActiveTab(firstTab);
+    }
+  }, [selectedNode?.id]);
 
   const toggleSection = (section: string) => {
     setExpandedSections(prev => ({
@@ -139,17 +127,6 @@ const NodePropertiesPanel: React.FC<NodePropertiesPanelProps> = ({
 
   // Get node icon based on type
   const nodeIcon = nodeTypeIcons[selectedNode?.type || ''] || nodeTypeIcons.default;
-
-  // Active tab state
-  const [activeTab, setActiveTab] = useState<string>(Object.keys(nodeFields)[0] || 'settings');
-
-  // Update active tab when node changes
-  useEffect(() => {
-    if (selectedNode) {
-      const firstTab = Object.keys(nodeFields)[0] || 'settings';
-      setActiveTab(firstTab);
-    }
-  }, [selectedNode?.id, nodeFields]);
 
   const renderField = (fieldKey: string, fieldConfig: any) => {
     const value = nodeConfig[fieldKey] ?? fieldConfig.default ?? '';
@@ -507,7 +484,24 @@ const NodePropertiesPanel: React.FC<NodePropertiesPanelProps> = ({
     return fields[nodeType] || {};
   };
 
-
+  if (!selectedNode) {
+    return (
+      <div className="w-80 bg-white border-l border-slate-200 flex flex-col h-full">
+        <div className="p-4 border-b border-slate-200 bg-slate-50">
+          <h2 className="text-sm font-medium text-slate-800 uppercase tracking-wider">Node Properties</h2>
+        </div>
+        <div className="flex-1 flex flex-col items-center justify-center p-8 bg-white">
+          <div className="text-center text-slate-400">
+            <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Settings className="w-8 h-8 text-slate-400" />
+            </div>
+            <h3 className="text-sm font-medium text-slate-500 mb-1">No node selected</h3>
+            <p className="text-xs text-slate-400">Click on a node to configure its properties</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="w-80 bg-white border-l border-slate-200 flex flex-col h-full">

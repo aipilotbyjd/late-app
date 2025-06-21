@@ -189,14 +189,34 @@ const WorkflowEditor = () => {
         return;
       }
 
+      // Get drop position relative to the canvas
+      const reactFlowBounds = reactFlowWrapper.current?.getBoundingClientRect();
+      if (!reactFlowBounds) return;
+
       const position = reactFlowInstance.project({
-        x: event.clientX,
-        y: event.clientY,
+        x: event.clientX - reactFlowBounds.left,
+        y: event.clientY - reactFlowBounds.top,
       });
       addNode(type, position);
     },
     [addNode, reactFlowInstance]
   );
+
+  const defaultEdgeOptions = useMemo(() => ({
+    animated: true,
+    type: 'smoothstep',
+    style: { 
+      strokeWidth: 2, 
+      stroke: '#9CA3AF',
+    },
+    markerEnd: { 
+      type: 'arrowclosed', 
+      color: '#9CA3AF',
+      width: 14,
+      height: 14,
+      strokeWidth: 1.5,
+    },
+  }), []);
 
   return (
     <div className="h-screen flex flex-col bg-gray-50">
@@ -318,21 +338,7 @@ const WorkflowEditor = () => {
               onEdgesChange={onEdgesChange}
               onConnect={onConnect}
               nodeTypes={nodeTypes}
-              defaultEdgeOptions={{
-                animated: true,
-                type: 'smoothstep',
-                style: { 
-                  strokeWidth: 2, 
-                  stroke: '#9CA3AF',
-                },
-                markerEnd: { 
-                  type: 'arrowclosed', 
-                  color: '#9CA3AF',
-                  width: 14,
-                  height: 14,
-                  strokeWidth: 1.5,
-                },
-              }}
+              defaultEdgeOptions={defaultEdgeOptions}
               fitView
               className="bg-gray-50"
               onLoad={setReactFlowInstance}
