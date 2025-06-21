@@ -2,7 +2,7 @@
 
 import React, { useState, useCallback, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Play, Save, Map, Grid, Zap, Search, Settings, HelpCircle, Bell, User, ChevronDown } from 'lucide-react';
+import { Play, Save, Map, Grid, Zap, Search, Settings, HelpCircle, Bell, User, ChevronDown, CornerDownLeft, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import NodePalette from './NodePalette';
@@ -24,6 +24,7 @@ import 'reactflow/dist/style.css';
 import NodePropertiesPanel from './NodePropertiesPanel';
 import WorkflowNode from './WorkflowNode';
 import { WorkflowNodeData } from '@/types/workflow';
+import { useRouter } from "next/navigation";
 
 const WorkflowEditor = () => {
   const [showGrid, setShowGrid] = useState(true);
@@ -34,6 +35,7 @@ const WorkflowEditor = () => {
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [reactFlowInstance, setReactFlowInstance] = useState<ReactFlowInstance | null>(null);
   const { toast } = useToast();
+  const router = useRouter();
 
   const onConnect = useCallback((params: Edge | Connection) => setEdges((eds) => addEdge(params, eds)), [setEdges]);
 
@@ -274,6 +276,16 @@ const WorkflowEditor = () => {
               transition={{ type: 'spring', stiffness: 300, damping: 30, delay: 0.4 }}
             >
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => router.push("/workflows")}
+                  className="ml-2"
+                >
+                  <CornerDownLeft className="h-4 w-4" />
+                </Button>
+              </motion.div>
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                 <Button variant="outline" size="sm" className="h-8 px-2 text-xs font-medium bg-white/80 backdrop-blur-sm" onClick={() => setShowGrid(!showGrid)}>
                   <Grid className="w-3.5 h-3.5 mr-1.5" />
                   {showGrid ? 'Hide Grid' : 'Show Grid'}
@@ -313,6 +325,16 @@ const WorkflowEditor = () => {
                 >
                   <Save className="w-4 h-4 mr-1" />
                   Save
+                </Button>
+              </motion.div>
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => router.push("/workflows")}
+                  className="ml-2"
+                >
+                  <CornerDownLeft className="h-4 w-4" />
                 </Button>
               </motion.div>
             </motion.div>
