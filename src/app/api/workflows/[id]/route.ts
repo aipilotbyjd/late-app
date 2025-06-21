@@ -5,16 +5,42 @@ import path from 'path';
 // Path to the JSON file
 const dataFilePath = path.join(process.cwd(), 'src', 'data', 'workflows.json');
 
+// Helper function to initialize an empty workflows file if needed
+function initializeWorkflowsFile() {
+  if (!fs.existsSync(dataFilePath)) {
+    const initialData = { workflows: [] };
+    fs.writeFileSync(dataFilePath, JSON.stringify(initialData, null, 2), 'utf-8');
+    return initialData;
+  }
+  return null;
+}
+
 // Helper function to read workflows from the JSON file
 function readWorkflows() {
-  const fileContent = fs.readFileSync(dataFilePath, 'utf-8');
-  const data = JSON.parse(fileContent);
-  return data;
+  try {
+    initializeWorkflowsFile();
+    const fileContent = fs.readFileSync(dataFilePath, 'utf-8');
+    if (!fileContent.trim()) {
+      return { workflows: [] };
+    }
+    const data = JSON.parse(fileContent);
+    return data;
+  } catch (error) {
+    console.error('Error reading workflows data:', error);
+    return { workflows: [] };
+  }
 }
 
 // Helper function to write workflows to the JSON file
 function writeWorkflows(data: any) {
-  fs.writeFileSync(dataFilePath, JSON.stringify(data, null, 2), 'utf-8');
+  try {
+    initializeWorkflowsFile();
+    fs.writeFileSync(dataFilePath, JSON.stringify(data, null, 2), 'utf-8');
+    return true;
+  } catch (error) {
+    console.error('Error writing workflows data:', error);
+    return false;
+  }
 }
 
 // PUT: Update a specific workflow by ID
@@ -30,10 +56,15 @@ export async function PUT(request: Request, { params }: { params: { id: string }
     }
     
     data.workflows[index] = { ...data.workflows[index], ...updatedWorkflow };
-    writeWorkflows(data);
+    const success = writeWorkflows(data);
+    
+    if (!success) {
+      throw new Error('Failed to write data');
+    }
     
     return NextResponse.json(data.workflows[index]);
   } catch (error) {
+    console.error('API error updating workflow:', error);
     return NextResponse.json({ error: 'Failed to update workflow' }, { status: 500 });
   }
 }
@@ -50,10 +81,15 @@ export async function DELETE(request: Request, { params }: { params: { id: strin
     }
     
     data.workflows = updatedWorkflows;
-    writeWorkflows(data);
+    const success = writeWorkflows(data);
+    
+    if (!success) {
+      throw new Error('Failed to write data');
+    }
     
     return NextResponse.json({ message: 'Workflow deleted successfully' });
   } catch (error) {
+    console.error('API error deleting workflow:', error);
     return NextResponse.json({ error: 'Failed to delete workflow' }, { status: 500 });
   }
 }
