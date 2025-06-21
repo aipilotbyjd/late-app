@@ -108,39 +108,39 @@ const WorkflowEditor = () => {
     try {
       // Simulate workflow execution
       await new Promise(resolve => setTimeout(resolve, 2000));
-      
+
       // Update node statuses
       setNodes((nds) =>
         nds.map((node, index) => {
           // Simulate sequential execution with delays
           const delay = index * 500;
           setTimeout(() => {
-            setNodes(innerNds => 
+            setNodes(innerNds =>
               innerNds.map(innerNode => {
                 if (innerNode.id === node.id) {
-                  return { 
-                    ...innerNode, 
-                    data: { 
-                      ...innerNode.data, 
-                      status: 'running' 
-                    } 
+                  return {
+                    ...innerNode,
+                    data: {
+                      ...innerNode.data,
+                      status: 'running'
+                    }
                   };
                 }
                 return innerNode;
               })
             );
-            
+
             setTimeout(() => {
-              setNodes(innerNds => 
+              setNodes(innerNds =>
                 innerNds.map(innerNode => {
                   if (innerNode.id === node.id) {
-                    return { 
-                      ...innerNode, 
-                      data: { 
-                        ...innerNode.data, 
+                    return {
+                      ...innerNode,
+                      data: {
+                        ...innerNode.data,
                         status: 'success',
                         executionTime: Math.floor(Math.random() * 1000) + 500
-                      } 
+                      }
                     };
                   }
                   return innerNode;
@@ -148,27 +148,27 @@ const WorkflowEditor = () => {
               );
             }, 1000);
           }, delay);
-          
+
           return node;
         })
       );
-      
+
       toast({ title: "Workflow Executed", description: "The workflow has been successfully executed." });
     } catch (error) {
       toast({ title: "Execution Failed", description: "There was an error executing the workflow." });
-      
+
       // Mark a random node as failed for demonstration
       const randomNodeIndex = Math.floor(Math.random() * nodes.length);
       setNodes((nds) =>
         nds.map((node, index) => {
           if (index === randomNodeIndex) {
-            return { 
-              ...node, 
-              data: { 
-                ...node.data, 
+            return {
+              ...node,
+              data: {
+                ...node.data,
                 status: 'error',
                 executionTime: Math.floor(Math.random() * 500) + 100
-              } 
+              }
             };
           }
           return node;
@@ -196,12 +196,12 @@ const WorkflowEditor = () => {
           source: edge.source,
           target: edge.target,
           type: edge.type
-        })) 
+        }))
       };
-      
+
       // Store in localStorage for demonstration
       localStorage.setItem('workflowData', JSON.stringify(workflowData));
-      
+
       toast({ title: "Workflow Saved", description: "The workflow has been successfully saved." });
     } catch (error) {
       toast({ title: "Save Failed", description: "There was an error saving the workflow." });
@@ -217,20 +217,20 @@ const WorkflowEditor = () => {
   }), []);
 
   return (
-    <motion.div 
+    <motion.div
       className="h-screen flex flex-col bg-gradient-to-b from-gray-50 to-gray-100"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
     >
-      <motion.div 
+      <motion.div
         className="bg-white border-b border-gray-200 h-12 flex items-center px-4 shrink-0 shadow-sm"
         initial={{ y: -20 }}
         animate={{ y: 0 }}
         transition={{ type: 'spring', stiffness: 300, damping: 30, delay: 0.2 }}
       >
         <div className="flex items-center space-x-6">
-          <motion.div 
+          <motion.div
             className="flex items-center space-x-2"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
@@ -240,7 +240,7 @@ const WorkflowEditor = () => {
             </div>
             <h1 className="text-base font-semibold text-gray-900">n8n</h1>
           </motion.div>
-          <motion.div 
+          <motion.div
             className="flex items-center space-x-1 text-sm font-medium text-gray-600 cursor-pointer"
             whileHover={{ color: '#4F46E5' }}
             whileTap={{ scale: 0.95 }}
@@ -248,7 +248,7 @@ const WorkflowEditor = () => {
             <span>Workflows</span>
             <ChevronDown className="w-4 h-4" />
           </motion.div>
-          <motion.div 
+          <motion.div
             className="flex items-center space-x-1 text-sm font-medium text-gray-600 cursor-pointer"
             whileHover={{ color: '#4F46E5' }}
             whileTap={{ scale: 0.95 }}
@@ -303,7 +303,7 @@ const WorkflowEditor = () => {
 
       <div className="flex-1 flex overflow-hidden">
         <ReactFlowProvider>
-          <motion.div 
+          <motion.div
             className="w-72 bg-white border-r border-gray-200 flex flex-col h-full"
             initial={{ x: -50, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
@@ -350,7 +350,7 @@ const WorkflowEditor = () => {
                 />
               )}
             </ReactFlow>
-            <motion.div 
+            <motion.div
               className="absolute top-3 left-3 z-10 flex space-x-2"
               initial={{ y: -20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
@@ -373,7 +373,7 @@ const WorkflowEditor = () => {
 
           <AnimatePresence>
             {selectedNode && (
-              <motion.div 
+              <motion.div
                 className="w-80 bg-white border-l border-gray-200 flex flex-col h-full overflow-hidden"
                 initial={{ x: 50, opacity: 0 }}
                 animate={{ x: 0, opacity: 1 }}
