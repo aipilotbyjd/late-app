@@ -4,18 +4,20 @@ import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Play, Save, Map, Grid, Zap, Search, Settings, HelpCircle, Bell, User, ChevronDown } from "lucide-react";
+import { usePathname } from "next/navigation";
 
+// Layout component for workflows pages, excluding editor page
 export default function WorkflowsLayout({
     children,
 }: {
     children: React.ReactNode;
 }) {
-    const [searchTerm, setSearchTerm] = useState('');
+    const pathname = usePathname();
 
-    // This is a placeholder for demonstration. In a real app, you'd pass this down to child components or use context.
-    const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setSearchTerm(e.target.value);
-    };
+    // Exclude layout for editor page
+    if (pathname.includes('/workflows/editor')) {
+        return <>{children}</>;
+    }
 
     return (
         <div className="flex min-h-screen flex-col">

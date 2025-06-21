@@ -217,90 +217,7 @@ const WorkflowEditor = () => {
   }), []);
 
   return (
-    <motion.div
-      className="h-screen flex flex-col bg-gradient-to-b from-gray-50 to-gray-100"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.5 }}
-    >
-      <motion.div
-        className="bg-white border-b border-gray-200 h-12 flex items-center px-4 shrink-0 shadow-sm"
-        initial={{ y: -20 }}
-        animate={{ y: 0 }}
-        transition={{ type: 'spring', stiffness: 300, damping: 30, delay: 0.2 }}
-      >
-        <div className="flex items-center space-x-6">
-          <motion.div
-            className="flex items-center space-x-2"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            <div className="w-7 h-7 bg-gradient-to-br from-blue-600 to-blue-800 rounded-md flex items-center justify-center">
-              <Zap className="w-4 h-4 text-white" />
-            </div>
-            <h1 className="text-base font-semibold text-gray-900">n8n</h1>
-          </motion.div>
-          <motion.div
-            className="flex items-center space-x-1 text-sm font-medium text-gray-600 cursor-pointer"
-            whileHover={{ color: '#4F46E5' }}
-            whileTap={{ scale: 0.95 }}
-          >
-            <span>Workflows</span>
-            <ChevronDown className="w-4 h-4" />
-          </motion.div>
-          <motion.div
-            className="flex items-center space-x-1 text-sm font-medium text-gray-600 cursor-pointer"
-            whileHover={{ color: '#4F46E5' }}
-            whileTap={{ scale: 0.95 }}
-          >
-            <span>Executions</span>
-          </motion.div>
-        </div>
-
-        <div className="ml-auto flex items-center space-x-4">
-          <motion.div
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            <Button onClick={executeWorkflow} disabled={isExecuting} className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-3 h-8">
-              <Play className="w-4 h-4 mr-2" />
-              {isExecuting ? 'Executing...' : 'Execute'}
-            </Button>
-          </motion.div>
-          <motion.div
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            <Button onClick={saveWorkflow} variant="outline" className="text-sm font-medium px-3 h-8 border-gray-300">
-              <Save className="w-4 h-4 mr-2" />
-              Save
-            </Button>
-          </motion.div>
-          <div className="flex items-center space-x-1">
-            <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
-              <Button variant="ghost" size="icon" className="w-8 h-8 text-gray-600 hover:bg-gray-100"><Settings className="w-4 h-4" /></Button>
-            </motion.div>
-            <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
-              <Button variant="ghost" size="icon" className="w-8 h-8 text-gray-600 hover:bg-gray-100"><HelpCircle className="w-4 h-4" /></Button>
-            </motion.div>
-            <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
-              <Button variant="ghost" size="icon" className="w-8 h-8 text-gray-600 hover:bg-gray-100 relative">
-                <Bell className="w-4 h-4" />
-                <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-              </Button>
-            </motion.div>
-            <div className="w-px h-6 bg-gray-200 mx-1"></div>
-            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-              <Button variant="ghost" className="h-8 px-2 text-sm font-medium text-gray-700 hover:bg-gray-100">
-                <div className="w-6 h-6 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xs font-semibold mr-2">U</div>
-                User
-                <ChevronDown className="w-4 h-4 ml-1" />
-              </Button>
-            </motion.div>
-          </div>
-        </div>
-      </motion.div>
-
+    <div className="flex flex-col h-full bg-gradient-to-b from-gray-50 to-gray-100">
       <div className="flex-1 flex overflow-hidden">
         <ReactFlowProvider>
           <motion.div
@@ -369,6 +286,36 @@ const WorkflowEditor = () => {
                 </Button>
               </motion.div>
             </motion.div>
+            <motion.div
+              className="absolute top-3 right-3 z-10 flex space-x-2"
+              initial={{ y: -20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 30, delay: 0.4 }}
+            >
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="bg-green-100 text-green-800 hover:bg-green-200"
+                  onClick={executeWorkflow}
+                  disabled={isExecuting}
+                >
+                  <Play className="w-4 h-4 mr-1" />
+                  {isExecuting ? 'Executing...' : 'Execute'}
+                </Button>
+              </motion.div>
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="bg-blue-100 text-blue-800 hover:bg-blue-200"
+                  onClick={saveWorkflow}
+                >
+                  <Save className="w-4 h-4 mr-1" />
+                  Save
+                </Button>
+              </motion.div>
+            </motion.div>
           </div>
 
           <AnimatePresence>
@@ -388,7 +335,7 @@ const WorkflowEditor = () => {
           </AnimatePresence>
         </ReactFlowProvider>
       </div>
-    </motion.div>
+    </div>
   );
 };
 
