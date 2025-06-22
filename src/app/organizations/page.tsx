@@ -42,10 +42,18 @@ const OrganizationsPage = () => {
           throw new Error('Failed to fetch organizations');
         }
         const data = await response.json();
-        setOrganizations(data);
+        if (Array.isArray(data)) {
+          setOrganizations(data);
+        } else if (data && Array.isArray(data.data)) {
+          setOrganizations(data.data);
+        } else {
+          setOrganizations([]);
+          console.error('Unexpected data format from API:', data);
+        }
       } catch (err) {
         console.error(err);
         setError('Failed to load Organizations. Please try again.');
+        setOrganizations([]);
       } finally {
         setIsLoading(false);
       }
