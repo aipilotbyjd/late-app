@@ -7,6 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Search, Trash2, Edit, Plus, ChevronLeft, ChevronRight } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { Workflow } from "@/types/workflow";
+import { useOrganization } from "@/context/OrganizationContext";
 
 interface Workflow {
   id: number;
@@ -19,6 +21,7 @@ interface Workflow {
 
 const WorkflowsPage = () => {
   const router = useRouter();
+  const { selectedOrganization } = useOrganization();
   const [workflows, setWorkflows] = useState<Workflow[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
@@ -82,22 +85,14 @@ const WorkflowsPage = () => {
     setIsModalOpen(false);
   };
 
-  const handleAddWorkflow = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newWorkflowName.trim()) return;
-
-    const newWorkflow = {
-      project_id: 1,
-      name: newWorkflowName,
-      description: newWorkflowDescription,
-      status: "draft",
-      workflow_json: {
-        nodes: [],
-        edges: []
-      }
-    };
+  const handleAddWorkflow = async () => {
+    if (!newWorkflowName.trim()) {
+      setError('Workflow name is required');
+      return;
+    }
 
     try {
+      setIsAdding(true);
       const response = await fetch('http://late-api.test/api/v1/workflows', {
         method: 'POST',
         headers: {
@@ -105,20 +100,33 @@ const WorkflowsPage = () => {
           'Accept': 'application/json',
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         },
-        body: JSON.stringify(newWorkflow),
+        body: JSON.stringify({
+          organization_id: selectedOrganization?.id || null,
+          name: newWorkflowName,
+          description: newWorkflowDescription || '',
+          workflow_json: {
+            nodes: [],
+            edges: []
+          },
+          status: 'draft'
+        }),
       });
 
       if (!response.ok) {
-        throw new Error(`Failed to add workflow: ${response.status} ${response.statusText}`);
+        throw new Error(`Failed to create workflow: ${response.status} ${response.statusText}`);
       }
 
       const addedWorkflow = await response.json();
       setWorkflows([...workflows, addedWorkflow]);
       closeModal();
-      router.push(`/workflows/editor/${addedWorkflow.id}`);
+      setNewWorkflowName('');
+      setNewWorkflowDescription('');
+      router.push(`/workflows/editor?id=${addedWorkflow.id}`);
     } catch (err) {
-      console.error('Add error:', err);
-      setError(`Failed to add workflow: ${err instanceof Error ? err.message : "Unknown error"}`);
+      console.error(err);
+      setError(err instanceof Error ? err.message : 'Failed to create workflow');
+    } finally {
+      setIsAdding(false);
     }
   };
 

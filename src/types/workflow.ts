@@ -60,3 +60,17 @@ export interface WorkflowAction {
   payload: any;
   timestamp: number;
 }
+
+export interface Workflow {
+  id: number;
+  organization_id?: number;
+  name: string;
+  description?: string;
+  workflow_json?: {
+    nodes: any[];
+    edges: any[];
+  };
+  status?: string;
+  created_at?: string;
+  updated_at?: string;
+}

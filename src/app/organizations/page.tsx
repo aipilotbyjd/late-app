@@ -8,57 +8,28 @@ import { Search, Trash2, Edit, Plus, ChevronLeft, ChevronRight } from "lucide-re
 import { motion, AnimatePresence } from "framer-motion";
 import { Organization } from "@/types/organization";
 import WorkflowsLayout from "../workflows/layout";
+import { useOrganization } from "@/context/OrganizationContext";
 
 const OrganizationsPage = () => {
-  const [organizations, setOrganizations] = useState<Organization[]>([]);
+  const { organizations, setOrganizations, selectedOrganization, setSelectedOrganization, isLoading } = useOrganization();
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(6);
-  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isAdding, setIsAdding] = useState(false);
   const [newOrganizationName, setNewOrganizationName] = useState('');
   const [newOrganizationDescription, setNewOrganizationDescription] = useState('');
-  const [newOrganizationTeamId, setNewOrganizationTeamId] = useState('');
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editName, setEditName] = useState('');
   const [editDescription, setEditDescription] = useState('');
-  const [editTeamId, setEditTeamId] = useState('');
+
+  const fetchOrganizations = async () => {
+    // This function is no longer needed as organizations are fetched in the context
+    // Keep it for potential future use or manual refresh
+  };
 
   useEffect(() => {
-    const fetchOrganizations = async () => {
-      try {
-        setIsLoading(true);
-        const response = await fetch('http://late-api.test/api/v1/organizations', {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
-          }
-        });
-        if (!response.ok) {
-          throw new Error('Failed to fetch organizations');
-        }
-        const data = await response.json();
-        if (Array.isArray(data)) {
-          setOrganizations(data);
-        } else if (data && Array.isArray(data.data)) {
-          setOrganizations(data.data);
-        } else {
-          setOrganizations([]);
-          console.error('Unexpected data format from API:', data);
-        }
-      } catch (err) {
-        console.error(err);
-        setError('Failed to load Organizations. Please try again.');
-        setOrganizations([]);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
     fetchOrganizations();
   }, []);
 
@@ -66,7 +37,6 @@ const OrganizationsPage = () => {
     setIsAdding(true);
     setNewOrganizationName('');
     setNewOrganizationDescription('');
-    setNewOrganizationTeamId('');
     setEditingId(null);
     setIsModalOpen(true);
   };
@@ -76,79 +46,91 @@ const OrganizationsPage = () => {
     setEditingId(organization.id);
     setEditName(organization.name);
     setEditDescription(organization.description || '');
-    setEditTeamId(organization.team_id ? organization.team_id.toString() : '');
     setIsModalOpen(true);
+  };
+
+  const selectOrganization = (organization: Organization) => {
+    setSelectedOrganization(organization);
   };
 
   const closeModal = () => {
     setIsModalOpen(false);
   };
 
-  const handleAddOrganization = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newOrganizationName.trim()) return;
-
-    const newOrganization = {
-      name: newOrganizationName,
-      description: newOrganizationDescription,
-      team_id: newOrganizationTeamId ? parseInt(newOrganizationTeamId) : undefined,
-    };
+  const handleAddOrganization = async () => {
+    if (!newOrganizationName.trim()) {
+      setError('Organization name is required');
+      return;
+    }
 
     try {
+      setIsAdding(true);
       const response = await fetch('http://late-api.test/api/v1/organizations', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${localStorage.getItem("token")}`
         },
-        body: JSON.stringify(newOrganization),
+        body: JSON.stringify({
+          name: newOrganizationName,
+          description: newOrganizationDescription || ''
+        }),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to add organization');
+        throw new Error(`Failed to create organization: ${response.status} ${response.statusText}`);
       }
 
       const addedOrganization = await response.json();
       setOrganizations([...organizations, addedOrganization]);
+      setSelectedOrganization(addedOrganization);
       closeModal();
+      setNewOrganizationName('');
+      setNewOrganizationDescription('');
     } catch (err) {
       console.error(err);
-      setError('Failed to add organization. Please try again.');
+      setError(err instanceof Error ? err.message : 'Failed to create organization');
+    } finally {
+      setIsAdding(false);
     }
   };
 
-  const handleEditOrganization = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (editingId === null || !editName.trim()) return;
-
-    const updatedOrganization = {
-      name: editName,
-      description: editDescription,
-      team_id: editTeamId ? parseInt(editTeamId) : undefined,
-    };
+  const handleEditOrganization = async () => {
+    if (!editName.trim()) {
+      setError('Organization name is required');
+      return;
+    }
+    if (editingId === null) return;
 
     try {
+      setIsAdding(true);
       const response = await fetch(`http://late-api.test/api/v1/organizations/${editingId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${localStorage.getItem("token")}`
         },
-        body: JSON.stringify(updatedOrganization),
+        body: JSON.stringify({
+          name: editName,
+          description: editDescription || ''
+        }),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to update organization');
+        throw new Error(`Failed to update organization: ${response.status} ${response.statusText}`);
       }
 
-      const updatedData = await response.json();
-      setOrganizations(organizations.map(p => p.id === editingId ? updatedData : p));
+      const updatedOrganization = await response.json();
+      setOrganizations(organizations.map(org => org.id === editingId ? updatedOrganization : org));
+      setSelectedOrganization(updatedOrganization);
       closeModal();
     } catch (err) {
       console.error(err);
-      setError('Failed to update organization. Please try again.');
+      setError(err instanceof Error ? err.message : 'Failed to update organization');
+    } finally {
+      setIsAdding(false);
     }
   };
 
@@ -158,7 +140,7 @@ const OrganizationsPage = () => {
         method: 'DELETE',
         headers: {
           'Accept': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${localStorage.getItem("token")}`
         }
       });
 
@@ -166,7 +148,8 @@ const OrganizationsPage = () => {
         throw new Error(`Failed to delete organization: ${response.status} ${response.statusText}`);
       }
 
-      setOrganizations(organizations.filter(p => p.id !== id));
+      setOrganizations(organizations.filter(org => org.id !== id));
+      setSelectedOrganization(null);
     } catch (err) {
       console.error('Delete error:', err);
       setError(`Failed to delete organization: ${err instanceof Error ? err.message : 'Unknown error'}`);
@@ -218,13 +201,14 @@ const OrganizationsPage = () => {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {paginatedOrganizations.map(organization => (
+            {paginatedOrganizations.map((organization: Organization) => (
               <motion.div
                 key={organization.id}
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 whileHover={{ y: -5, transition: { duration: 0.2 } }}
-                className="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden border border-gray-100 dark:border-gray-700 hover:shadow-lg transition-all duration-300"
+                className="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden border border-gray-100 dark:border-gray-700 hover:shadow-lg transition-all duration-300 cursor-pointer"
+                onClick={() => selectOrganization(organization)}
               >
                 <div className="p-6">
                   <div className="flex justify-between items-start mb-3">
@@ -233,7 +217,10 @@ const OrganizationsPage = () => {
                       <Button
                         variant="outline"
                         size="icon"
-                        onClick={() => openModalForEdit(organization)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openModalForEdit(organization);
+                        }}
                         className="h-8 w-8 border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
                       >
                         <Edit className="w-4 h-4" />
@@ -241,7 +228,10 @@ const OrganizationsPage = () => {
                       <Button
                         variant="outline"
                         size="icon"
-                        onClick={() => handleDeleteOrganization(organization.id)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteOrganization(organization.id);
+                        }}
                         className="h-8 w-8 border-gray-200 dark:border-gray-700 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10"
                       >
                         <Trash2 className="w-4 h-4" />
@@ -250,8 +240,10 @@ const OrganizationsPage = () => {
                   </div>
                   <p className="text-gray-600 dark:text-gray-400 text-sm mb-4 line-clamp-2 min-h-[2.5rem]">{organization.description || 'No description provided'}</p>
                   <div className="flex justify-between items-center text-xs text-gray-500 dark:text-gray-400 pt-2 border-t border-gray-100 dark:border-gray-700">
-                    <span>Team: {organization.team_id || 'N/A'}</span>
-                    <span>Created: {new Date(organization.createdAt).toLocaleDateString()}</span>
+                    <span>Created: {new Date(organization.created_at || '').toLocaleDateString()}</span>
+                    {selectedOrganization?.id === organization.id && (
+                      <span className="text-green-500 font-medium">Selected</span>
+                    )}
                   </div>
                 </div>
               </motion.div>
@@ -304,68 +296,71 @@ const OrganizationsPage = () => {
         <AnimatePresence>
           {isModalOpen && (
             <motion.div
-              className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 backdrop-blur-sm"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
+              className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
               onClick={closeModal}
             >
               <motion.div
-                className="bg-white dark:bg-gray-800 rounded-2xl p-6 w-full max-w-md shadow-2xl mx-4 border border-gray-100 dark:border-gray-700"
                 initial={{ scale: 0.95, y: 20 }}
                 animate={{ scale: 1, y: 0 }}
                 exit={{ scale: 0.95, y: 20 }}
+                className="bg-white dark:bg-gray-800 rounded-xl max-w-lg w-full shadow-xl border border-gray-100 dark:border-gray-700 max-h-[90vh] overflow-y-auto"
                 onClick={(e) => e.stopPropagation()}
               >
-                <h2 className="text-2xl font-bold mb-6 text-gray-800 dark:text-white">{isAdding ? 'Create New Organization' : 'Edit Organization'}</h2>
-                <form onSubmit={isAdding ? handleAddOrganization : handleEditOrganization} className="space-y-5">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Organization Name <span className="text-red-500">*</span></label>
-                    <Input
-                      value={isAdding ? newOrganizationName : editName}
-                      onChange={(e) => isAdding ? setNewOrganizationName(e.target.value) : setEditName(e.target.value)}
-                      placeholder="Enter organization name"
-                      required
-                      className="h-10 border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-blue-500 dark:bg-gray-900"
-                    />
+                <div className="p-6">
+                  <h2 className="text-xl font-semibold text-gray-800 dark:text-white mb-6">{isAdding ? 'Add New Organization' : 'Edit Organization'}</h2>
+                  {error && <div className="mb-4 text-red-500 text-sm">{error}</div>}
+                  <div className="space-y-5">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Name</label>
+                      {isAdding ? (
+                        <Input
+                          placeholder="Organization name"
+                          value={newOrganizationName}
+                          onChange={(e) => setNewOrganizationName(e.target.value)}
+                          className="w-full rounded-md border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 dark:bg-gray-900"
+                        />
+                      ) : (
+                        <Input
+                          placeholder="Organization name"
+                          value={editName}
+                          onChange={(e) => setEditName(e.target.value)}
+                          className="w-full rounded-md border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 dark:bg-gray-900"
+                        />
+                      )}
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
+                      {isAdding ? (
+                        <Textarea
+                          placeholder="Organization description (optional)"
+                          value={newOrganizationDescription}
+                          onChange={(e) => setNewOrganizationDescription(e.target.value)}
+                          className="w-full rounded-md border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 dark:bg-gray-900"
+                          rows={3}
+                        />
+                      ) : (
+                        <Textarea
+                          placeholder="Organization description (optional)"
+                          value={editDescription}
+                          onChange={(e) => setEditDescription(e.target.value)}
+                          className="w-full rounded-md border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 dark:bg-gray-900"
+                          rows={3}
+                        />
+                      )}
+                    </div>
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Description</label>
-                    <Textarea
-                      value={isAdding ? newOrganizationDescription : editDescription}
-                      onChange={(e) => isAdding ? setNewOrganizationDescription(e.target.value) : setEditDescription(e.target.value)}
-                      placeholder="Describe your organization"
-                      rows={3}
-                      className="border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-blue-500 dark:bg-gray-900"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Team ID</label>
-                    <Input
-                      value={isAdding ? newOrganizationTeamId : editTeamId}
-                      onChange={(e) => isAdding ? setNewOrganizationTeamId(e.target.value) : setEditTeamId(e.target.value)}
-                      placeholder="Optional team ID"
-                      type="number"
-                      className="h-10 border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-blue-500 dark:bg-gray-900"
-                    />
-                  </div>
-                  <div className="flex justify-end space-x-3 pt-2">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={closeModal}
-                      className="border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
-                    >
+                  <div className="flex justify-end space-x-3 mt-6">
+                    <Button variant="outline" onClick={closeModal} className="rounded-md border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800">
                       Cancel
                     </Button>
-                    <Button
-                      type="submit"
-                      className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white"
-                    >
-                      {isAdding ? 'Create organization' : 'Save Changes'}
+                    <Button onClick={isAdding ? handleAddOrganization : handleEditOrganization} disabled={isAdding} className="rounded-md bg-blue-600 hover:bg-blue-700 text-white">
+                      {isAdding ? 'Saving...' : 'Save Changes'}
                     </Button>
                   </div>
-                </form>
+                </div>
               </motion.div>
             </motion.div>
           )}

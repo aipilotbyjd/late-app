@@ -5,6 +5,13 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { Play, Save, Map, Grid, Zap, Search, Settings, HelpCircle, Bell, User, ChevronDown } from "lucide-react";
 import { usePathname } from "next/navigation";
+import { useOrganization } from "@/context/OrganizationContext";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 // Layout component for workflows pages, excluding editor page
 export default function WorkflowsLayout({
@@ -15,6 +22,8 @@ export default function WorkflowsLayout({
     const pathname = usePathname();
     const isProjectsPage = pathname.startsWith('/projects');
     const pageTitle = isProjectsPage ? 'Projects' : 'Workflows';
+
+    const { organizations, isLoading, selectedOrganization, setSelectedOrganization } = useOrganization();
 
     // Exclude layout for editor page
     if (pathname.includes('/workflows/editor') || pathname.includes('/projects/editor')) {
@@ -39,6 +48,27 @@ export default function WorkflowsLayout({
                             <Zap className="w-4 h-4 text-white" />
                         </motion.div>
                         <h1 className="text-lg font-semibold text-gray-900 dark:text-white">{pageTitle}</h1>
+                        {!isLoading && organizations.length > 0 && (
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button variant="outline" size="sm" className="h-7 text-xs px-2.5 py-0.5 ml-2">
+                                        {selectedOrganization?.name || "Select Organization"}
+                                        <ChevronDown className="w-4 h-4 ml-1" />
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="start">
+                                    {organizations.map((org) => (
+                                        <DropdownMenuItem
+                                            key={org.id}
+                                            onClick={() => setSelectedOrganization(org)}
+                                            className={selectedOrganization?.id === org.id ? "bg-accent" : ""}
+                                        >
+                                            {org.name}
+                                        </DropdownMenuItem>
+                                    ))}
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        )}
                     </div>
                     <div className="flex items-center space-x-3">
                         <Button variant="outline" size="sm" className="h-7 px-2.5 text-xs">Quick Actions</Button>
