@@ -30,7 +30,14 @@ const OrganizationsPage = () => {
     const fetchOrganizations = async () => {
       try {
         setIsLoading(true);
-        const response = await fetch('http://late-api.test/api/v1/organizations');
+        const response = await fetch('http://late-api.test/api/v1/organizations', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
+        });
         if (!response.ok) {
           throw new Error('Failed to fetch organizations');
         }
@@ -141,6 +148,10 @@ const OrganizationsPage = () => {
     try {
       const response = await fetch(`http://late-api.test/api/v1/organizations/${id}`, {
         method: 'DELETE',
+        headers: {
+          'Accept': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
       });
 
       if (!response.ok) {
