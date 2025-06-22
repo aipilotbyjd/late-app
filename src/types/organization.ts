@@ -1,4 +1,4 @@
-export interface Project {
+export interface Organization {
   id: number;
   team_id: string;
   name: string;

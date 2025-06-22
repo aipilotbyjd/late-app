@@ -6,11 +6,11 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Search, Trash2, Edit, Plus, ChevronLeft, ChevronRight } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Project } from "@/types/project";
+import { Organization } from "@/types/organization";
 import WorkflowsLayout from "../workflows/layout";
 
-const ProjectsPage = () => {
-  const [projects, setProjects] = useState<Project[]>([]);
+const OrganizationsPage = () => {
+  const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(6);
@@ -18,50 +18,50 @@ const ProjectsPage = () => {
   const [error, setError] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isAdding, setIsAdding] = useState(false);
-  const [newProjectName, setNewProjectName] = useState('');
-  const [newProjectDescription, setNewProjectDescription] = useState('');
-  const [newProjectTeamId, setNewProjectTeamId] = useState('');
+  const [newOrganizationName, setNewOrganizationName] = useState('');
+  const [newOrganizationDescription, setNewOrganizationDescription] = useState('');
+  const [newOrganizationTeamId, setNewOrganizationTeamId] = useState('');
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editName, setEditName] = useState('');
   const [editDescription, setEditDescription] = useState('');
   const [editTeamId, setEditTeamId] = useState('');
 
   useEffect(() => {
-    const fetchProjects = async () => {
+    const fetchOrganizations = async () => {
       try {
         setIsLoading(true);
-        const response = await fetch('/api/projects');
+        const response = await fetch('http://late-api.test/api/v1/organizations');
         if (!response.ok) {
-          throw new Error('Failed to fetch projects');
+          throw new Error('Failed to fetch organizations');
         }
         const data = await response.json();
-        setProjects(data);
+        setOrganizations(data);
       } catch (err) {
         console.error(err);
-        setError('Failed to load projects. Please try again.');
+        setError('Failed to load Organizations. Please try again.');
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchProjects();
+    fetchOrganizations();
   }, []);
 
   const openModalForAdd = () => {
     setIsAdding(true);
-    setNewProjectName('');
-    setNewProjectDescription('');
-    setNewProjectTeamId('');
+    setNewOrganizationName('');
+    setNewOrganizationDescription('');
+    setNewOrganizationTeamId('');
     setEditingId(null);
     setIsModalOpen(true);
   };
 
-  const openModalForEdit = (project: Project) => {
+  const openModalForEdit = (organization: Organization) => {
     setIsAdding(false);
-    setEditingId(project.id);
-    setEditName(project.name);
-    setEditDescription(project.description || '');
-    setEditTeamId(project.team_id ? project.team_id.toString() : '');
+    setEditingId(organization.id);
+    setEditName(organization.name);
+    setEditDescription(organization.description || '');
+    setEditTeamId(organization.team_id ? organization.team_id.toString() : '');
     setIsModalOpen(true);
   };
 
@@ -69,116 +69,120 @@ const ProjectsPage = () => {
     setIsModalOpen(false);
   };
 
-  const handleAddProject = async (e: React.FormEvent) => {
+  const handleAddOrganization = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newProjectName.trim()) return;
+    if (!newOrganizationName.trim()) return;
 
-    const newProject = {
-      name: newProjectName,
-      description: newProjectDescription,
-      team_id: newProjectTeamId ? parseInt(newProjectTeamId) : undefined,
+    const newOrganization = {
+      name: newOrganizationName,
+      description: newOrganizationDescription,
+      team_id: newOrganizationTeamId ? parseInt(newOrganizationTeamId) : undefined,
     };
 
     try {
-      const response = await fetch('/api/projects', {
+      const response = await fetch('http://late-api.test/api/v1/organizations', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
         },
-        body: JSON.stringify(newProject),
+        body: JSON.stringify(newOrganization),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to add project');
+        throw new Error('Failed to add organization');
       }
 
-      const addedProject = await response.json();
-      setProjects([...projects, addedProject]);
+      const addedOrganization = await response.json();
+      setOrganizations([...organizations, addedOrganization]);
       closeModal();
     } catch (err) {
       console.error(err);
-      setError('Failed to add project. Please try again.');
+      setError('Failed to add organization. Please try again.');
     }
   };
 
-  const handleEditProject = async (e: React.FormEvent) => {
+  const handleEditOrganization = async (e: React.FormEvent) => {
     e.preventDefault();
     if (editingId === null || !editName.trim()) return;
 
-    const updatedProject = {
+    const updatedOrganization = {
       name: editName,
       description: editDescription,
       team_id: editTeamId ? parseInt(editTeamId) : undefined,
     };
 
     try {
-      const response = await fetch(`/api/projects/${editingId}`, {
+      const response = await fetch(`http://late-api.test/api/v1/organizations/${editingId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
         },
-        body: JSON.stringify(updatedProject),
+        body: JSON.stringify(updatedOrganization),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to update project');
+        throw new Error('Failed to update organization');
       }
 
       const updatedData = await response.json();
-      setProjects(projects.map(p => p.id === editingId ? updatedData : p));
+      setOrganizations(organizations.map(p => p.id === editingId ? updatedData : p));
       closeModal();
     } catch (err) {
       console.error(err);
-      setError('Failed to update project. Please try again.');
+      setError('Failed to update organization. Please try again.');
     }
   };
 
-  const handleDeleteProject = async (id: number) => {
+  const handleDeleteOrganization = async (id: number) => {
     try {
-      const response = await fetch(`/api/projects/${id}`, {
+      const response = await fetch(`http://late-api.test/api/v1/organizations/${id}`, {
         method: 'DELETE',
       });
 
       if (!response.ok) {
-        throw new Error(`Failed to delete project: ${response.status} ${response.statusText}`);
+        throw new Error(`Failed to delete organization: ${response.status} ${response.statusText}`);
       }
 
-      setProjects(projects.filter(p => p.id !== id));
+      setOrganizations(organizations.filter(p => p.id !== id));
     } catch (err) {
       console.error('Delete error:', err);
-      setError(`Failed to delete project: ${err instanceof Error ? err.message : 'Unknown error'}`);
+      setError(`Failed to delete organization: ${err instanceof Error ? err.message : 'Unknown error'}`);
     }
   };
 
-  const filteredProjects = projects.filter(project =>
-    project.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    project.description?.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredOrganizations = organizations.filter(organization =>
+    organization.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    organization.description?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const totalPages = Math.ceil(filteredProjects.length / itemsPerPage);
-  const paginatedProjects = filteredProjects.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+  const totalPages = Math.ceil(filteredOrganizations.length / itemsPerPage);
+  const paginatedOrganizations = filteredOrganizations.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   return (
     <WorkflowsLayout>
       <div className="w-full h-full overflow-auto p-6 max-w-7xl mx-auto bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
         <div className="flex justify-between items-center mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-gray-800 dark:text-white mb-1">Projects Dashboard</h1>
-            <p className="text-gray-500 dark:text-gray-400 text-sm">Manage your projects with ease</p>
+            <h1 className="text-3xl font-bold text-gray-800 dark:text-white mb-1">Organizations Dashboard</h1>
+            <p className="text-gray-500 dark:text-gray-400 text-sm">Manage your Organizations with ease</p>
           </div>
           <Button
             onClick={openModalForAdd}
             className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white transform transition-all duration-200 hover:scale-105"
           >
             <Plus className="w-4 h-4 mr-2" />
-            Add Project
+            Add organization
           </Button>
         </div>
 
         <div className="relative mb-8 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
           <Input
-            placeholder="Search projects..."
+            placeholder="Search Organizations..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-10 h-12 border-0 focus:ring-0 focus:border-gray-300 dark:focus:border-gray-600 text-gray-700 dark:text-gray-200 bg-transparent"
@@ -186,18 +190,18 @@ const ProjectsPage = () => {
         </div>
 
         {isLoading ? (
-          <div className="text-center py-16 text-gray-500 dark:text-gray-400 animate-pulse">Loading projects...</div>
+          <div className="text-center py-16 text-gray-500 dark:text-gray-400 animate-pulse">Loading Organizations...</div>
         ) : error ? (
           <div className="text-center py-16 text-red-500 dark:text-red-400 bg-red-50 dark:bg-red-900/10 rounded-xl border border-red-100 dark:border-red-800">{error}</div>
-        ) : filteredProjects.length === 0 ? (
+        ) : filteredOrganizations.length === 0 ? (
           <div className="text-center py-16 text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
-            No projects found. {searchTerm ? 'Try different search terms.' : 'Create your first project to get started.'}
+            No Organizations found. {searchTerm ? 'Try different search terms.' : 'Create your first organization to get started.'}
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {paginatedProjects.map(project => (
+            {paginatedOrganizations.map(organization => (
               <motion.div
-                key={project.id}
+                key={organization.id}
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 whileHover={{ y: -5, transition: { duration: 0.2 } }}
@@ -205,12 +209,12 @@ const ProjectsPage = () => {
               >
                 <div className="p-6">
                   <div className="flex justify-between items-start mb-3">
-                    <h2 className="text-xl font-bold text-gray-800 dark:text-white line-clamp-1">{project.name}</h2>
+                    <h2 className="text-xl font-bold text-gray-800 dark:text-white line-clamp-1">{organization.name}</h2>
                     <div className="flex space-x-2">
                       <Button
                         variant="outline"
                         size="icon"
-                        onClick={() => openModalForEdit(project)}
+                        onClick={() => openModalForEdit(organization)}
                         className="h-8 w-8 border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
                       >
                         <Edit className="w-4 h-4" />
@@ -218,17 +222,17 @@ const ProjectsPage = () => {
                       <Button
                         variant="outline"
                         size="icon"
-                        onClick={() => handleDeleteProject(project.id)}
+                        onClick={() => handleDeleteOrganization(organization.id)}
                         className="h-8 w-8 border-gray-200 dark:border-gray-700 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10"
                       >
                         <Trash2 className="w-4 h-4" />
                       </Button>
                     </div>
                   </div>
-                  <p className="text-gray-600 dark:text-gray-400 text-sm mb-4 line-clamp-2 min-h-[2.5rem]">{project.description || 'No description provided'}</p>
+                  <p className="text-gray-600 dark:text-gray-400 text-sm mb-4 line-clamp-2 min-h-[2.5rem]">{organization.description || 'No description provided'}</p>
                   <div className="flex justify-between items-center text-xs text-gray-500 dark:text-gray-400 pt-2 border-t border-gray-100 dark:border-gray-700">
-                    <span>Team: {project.team_id || 'N/A'}</span>
-                    <span>Created: {new Date(project.createdAt).toLocaleDateString()}</span>
+                    <span>Team: {organization.team_id || 'N/A'}</span>
+                    <span>Created: {new Date(organization.createdAt).toLocaleDateString()}</span>
                   </div>
                 </div>
               </motion.div>
@@ -294,14 +298,14 @@ const ProjectsPage = () => {
                 exit={{ scale: 0.95, y: 20 }}
                 onClick={(e) => e.stopPropagation()}
               >
-                <h2 className="text-2xl font-bold mb-6 text-gray-800 dark:text-white">{isAdding ? 'Create New Project' : 'Edit Project'}</h2>
-                <form onSubmit={isAdding ? handleAddProject : handleEditProject} className="space-y-5">
+                <h2 className="text-2xl font-bold mb-6 text-gray-800 dark:text-white">{isAdding ? 'Create New Organization' : 'Edit Organization'}</h2>
+                <form onSubmit={isAdding ? handleAddOrganization : handleEditOrganization} className="space-y-5">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Project Name <span className="text-red-500">*</span></label>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Organization Name <span className="text-red-500">*</span></label>
                     <Input
-                      value={isAdding ? newProjectName : editName}
-                      onChange={(e) => isAdding ? setNewProjectName(e.target.value) : setEditName(e.target.value)}
-                      placeholder="Enter project name"
+                      value={isAdding ? newOrganizationName : editName}
+                      onChange={(e) => isAdding ? setNewOrganizationName(e.target.value) : setEditName(e.target.value)}
+                      placeholder="Enter organization name"
                       required
                       className="h-10 border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-blue-500 dark:bg-gray-900"
                     />
@@ -309,9 +313,9 @@ const ProjectsPage = () => {
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Description</label>
                     <Textarea
-                      value={isAdding ? newProjectDescription : editDescription}
-                      onChange={(e) => isAdding ? setNewProjectDescription(e.target.value) : setEditDescription(e.target.value)}
-                      placeholder="Describe your project"
+                      value={isAdding ? newOrganizationDescription : editDescription}
+                      onChange={(e) => isAdding ? setNewOrganizationDescription(e.target.value) : setEditDescription(e.target.value)}
+                      placeholder="Describe your organization"
                       rows={3}
                       className="border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-blue-500 dark:bg-gray-900"
                     />
@@ -319,8 +323,8 @@ const ProjectsPage = () => {
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Team ID</label>
                     <Input
-                      value={isAdding ? newProjectTeamId : editTeamId}
-                      onChange={(e) => isAdding ? setNewProjectTeamId(e.target.value) : setEditTeamId(e.target.value)}
+                      value={isAdding ? newOrganizationTeamId : editTeamId}
+                      onChange={(e) => isAdding ? setNewOrganizationTeamId(e.target.value) : setEditTeamId(e.target.value)}
                       placeholder="Optional team ID"
                       type="number"
                       className="h-10 border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-blue-500 dark:bg-gray-900"
@@ -339,7 +343,7 @@ const ProjectsPage = () => {
                       type="submit"
                       className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white"
                     >
-                      {isAdding ? 'Create Project' : 'Save Changes'}
+                      {isAdding ? 'Create organization' : 'Save Changes'}
                     </Button>
                   </div>
                 </form>
@@ -352,4 +356,4 @@ const ProjectsPage = () => {
   );
 };
 
-export default ProjectsPage;
+export default OrganizationsPage;

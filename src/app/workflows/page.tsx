@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -9,12 +10,15 @@ import { motion, AnimatePresence } from "framer-motion";
 
 interface Workflow {
   id: number;
+  project_id: number;
   name: string;
   description: string;
-  createdAt: string;
+  status: string;
+  created_at: string;
 }
 
 const WorkflowsPage = () => {
+  const router = useRouter();
   const [workflows, setWorkflows] = useState<Workflow[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
@@ -34,14 +38,21 @@ const WorkflowsPage = () => {
       setIsLoading(true);
       setError(null);
       try {
-        const response = await fetch('/api/workflows');
+        const response = await fetch('http://late-api.test/api/v1/workflows', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
+        });
         if (!response.ok) {
-          throw new Error('Failed to fetch workflows');
+          throw new Error(`Failed to fetch workflows: ${response.status} ${response.statusText}`);
         }
         const data = await response.json();
-        setWorkflows(data.workflows || []);
+        setWorkflows(data.data || []);
       } catch (err) {
-        setError('Failed to load workflows. Please try again later.');
+        setError(`Failed to load workflows: ${err instanceof Error ? err.message : "Unknown error"}`);
         console.error(err);
       } finally {
         setIsLoading(false);
@@ -76,36 +87,49 @@ const WorkflowsPage = () => {
     if (!newWorkflowName.trim()) return;
 
     const newWorkflow = {
+      project_id: 1,
       name: newWorkflowName,
       description: newWorkflowDescription,
+      status: "draft",
+      workflow_json: {
+        nodes: [],
+        edges: []
+      }
     };
 
     try {
-      const response = await fetch('/api/workflows', {
+      const response = await fetch('http://late-api.test/api/v1/workflows', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
         },
         body: JSON.stringify(newWorkflow),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to add workflow');
+        throw new Error(`Failed to add workflow: ${response.status} ${response.statusText}`);
       }
 
       const addedWorkflow = await response.json();
       setWorkflows([...workflows, addedWorkflow]);
       closeModal();
+      router.push(`/workflows/editor/${addedWorkflow.id}`);
     } catch (err) {
-      console.error(err);
-      setError('Failed to add workflow. Please try again.');
+      console.error('Add error:', err);
+      setError(`Failed to add workflow: ${err instanceof Error ? err.message : "Unknown error"}`);
     }
   };
 
   const handleDeleteWorkflow = async (id: number) => {
     try {
-      const response = await fetch(`/api/workflows/${id}`, {
+      const response = await fetch(`http://late-api.test/api/v1/workflows/${id}`, {
         method: 'DELETE',
+        headers: {
+          'Accept': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
       });
 
       if (!response.ok) {
@@ -129,16 +153,18 @@ const WorkflowsPage = () => {
     };
 
     try {
-      const response = await fetch(`/api/workflows/${editingId}`, {
+      const response = await fetch(`http://late-api.test/api/v1/workflows/${editingId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
         },
         body: JSON.stringify(updatedWorkflow),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to update workflow');
+        throw new Error(`Failed to update workflow: ${response.status} ${response.statusText}`);
       }
 
       const updated = await response.json();
@@ -147,8 +173,8 @@ const WorkflowsPage = () => {
       ));
       closeModal();
     } catch (err) {
-      console.error(err);
-      setError('Failed to update workflow. Please try again.');
+      console.error('Update error:', err);
+      setError(`Failed to update workflow: ${err instanceof Error ? err.message : 'Unknown error'}`);
     }
   };
 
@@ -246,7 +272,7 @@ const WorkflowsPage = () => {
                   </div>
                   <p className="text-gray-600 dark:text-gray-400 text-sm mb-4 line-clamp-2 min-h-[2.5rem]">{workflow.description || 'No description provided'}</p>
                   <div className="text-xs text-gray-500 dark:text-gray-400 pt-2 border-t border-gray-100 dark:border-gray-700">
-                    Created: {new Date(workflow.createdAt).toLocaleDateString()}
+                    Created: {new Date(workflow.created_at).toLocaleDateString()}
                   </div>
                 </div>
               </motion.div>
