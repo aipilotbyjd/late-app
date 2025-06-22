@@ -21,6 +21,7 @@ const WorkflowsPage = () => {
   const [itemsPerPage, setItemsPerPage] = useState(6);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [isAdding, setIsAdding] = useState(false);
   const [newWorkflowName, setNewWorkflowName] = useState('');
   const [newWorkflowDescription, setNewWorkflowDescription] = useState('');
@@ -50,6 +51,26 @@ const WorkflowsPage = () => {
     fetchWorkflows();
   }, []);
 
+  const openModalForAdd = () => {
+    setIsAdding(true);
+    setNewWorkflowName('');
+    setNewWorkflowDescription('');
+    setEditingId(null);
+    setIsModalOpen(true);
+  };
+
+  const openModalForEdit = (workflow: Workflow) => {
+    setIsAdding(false);
+    setEditingId(workflow.id);
+    setEditName(workflow.name);
+    setEditDescription(workflow.description);
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+  };
+
   const handleAddWorkflow = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newWorkflowName.trim()) return;
@@ -74,9 +95,7 @@ const WorkflowsPage = () => {
 
       const addedWorkflow = await response.json();
       setWorkflows([...workflows, addedWorkflow]);
-      setNewWorkflowName('');
-      setNewWorkflowDescription('');
-      setIsAdding(false);
+      closeModal();
     } catch (err) {
       console.error(err);
       setError('Failed to add workflow. Please try again.');
@@ -100,9 +119,9 @@ const WorkflowsPage = () => {
     }
   };
 
-  const handleEditWorkflow = async (e: React.FormEvent, id: number) => {
+  const handleEditWorkflow = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!editName.trim()) return;
+    if (editingId === null || !editName.trim()) return;
 
     const updatedWorkflow = {
       name: editName,
@@ -110,7 +129,7 @@ const WorkflowsPage = () => {
     };
 
     try {
-      const response = await fetch(`/api/workflows/${id}`, {
+      const response = await fetch(`/api/workflows/${editingId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -124,19 +143,13 @@ const WorkflowsPage = () => {
 
       const updated = await response.json();
       setWorkflows(workflows.map(workflow =>
-        workflow.id === id ? updated : workflow
+        workflow.id === editingId ? updated : workflow
       ));
-      setEditingId(null);
+      closeModal();
     } catch (err) {
       console.error(err);
       setError('Failed to update workflow. Please try again.');
     }
-  };
-
-  const startEditing = (workflow: Workflow) => {
-    setEditingId(workflow.id);
-    setEditName(workflow.name);
-    setEditDescription(workflow.description);
   };
 
   // Filtering and pagination
@@ -161,221 +174,127 @@ const WorkflowsPage = () => {
   };
 
   return (
-    <div className="w-full">
-      {/* Error Message */}
-      <AnimatePresence>
-        {error && (
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="rounded-md bg-red-50 p-4 text-red-700 dark:bg-red-900/20 dark:text-red-400"
-          >
-            {error}
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Add Workflow Button */}
-      <motion.div
-        className="mb-6"
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.1 }}
-      >
-        {!isAdding ? (
-          <Button onClick={() => setIsAdding(true)} className="w-full sm:w-auto">
-            Add Workflow
-          </Button>
-        ) : (
-          <Button variant="secondary" onClick={() => setIsAdding(false)} className="w-full sm:w-auto">
-            Cancel
-          </Button>
-        )}
-      </motion.div>
-
-      {/* Add Workflow Form */}
-      <AnimatePresence>
-        {isAdding && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.3 }}
-            className="mb-6 rounded-lg border bg-white p-6 shadow-sm dark:bg-gray-800"
-          >
-            <form onSubmit={handleAddWorkflow} className="space-y-4">
-              <div>
-                <label className="mb-1 block text-sm font-medium">Name</label>
-                <Input
-                  value={newWorkflowName}
-                  onChange={(e) => setNewWorkflowName(e.target.value)}
-                  placeholder="Workflow name"
-                  required
-                />
-              </div>
-              <div>
-                <label className="mb-1 block text-sm font-medium">Description</label>
-                <Textarea
-                  value={newWorkflowDescription}
-                  onChange={(e) => setNewWorkflowDescription(e.target.value)}
-                  placeholder="Workflow description"
-                  rows={3}
-                />
-              </div>
-              <Button type="submit">Save Workflow</Button>
-            </form>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Workflows List */}
-      <div className="mb-6">
-        {isLoading ? (
-          <div className="py-8 text-center">Loading workflows...</div>
-        ) : filteredWorkflows.length === 0 ? (
-          <div className="rounded-lg border bg-white p-6 text-center text-gray-500 shadow-sm dark:bg-gray-800 dark:text-gray-400">
-            No workflows found. {searchTerm ? 'Try adjusting your search.' : 'Try adding a new workflow.'}
-          </div>
-        ) : (
-          <motion.div
-            className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"
-            initial="hidden"
-            animate="visible"
-            variants={{
-              visible: {
-                transition: {
-                  staggerChildren: 0.05
-                }
-              }
-            }}
-          >
-            <AnimatePresence mode="popLayout">
-              {currentWorkflows.map((workflow) => (
-                <motion.div
-                  key={workflow.id}
-                  layout
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.95 }}
-                  className="relative rounded-lg border bg-white p-6 shadow-sm dark:bg-gray-800"
-                >
-                  {editingId === workflow.id ? (
-                    <form onSubmit={(e) => handleEditWorkflow(e, workflow.id)} className="space-y-4">
-                      <div>
-                        <label className="mb-1 block text-sm font-medium">Name</label>
-                        <Input
-                          value={editName}
-                          onChange={(e) => setEditName(e.target.value)}
-                          placeholder="Workflow name"
-                          required
-                        />
-                      </div>
-                      <div>
-                        <label className="mb-1 block text-sm font-medium">Description</label>
-                        <Textarea
-                          value={editDescription}
-                          onChange={(e) => setEditDescription(e.target.value)}
-                          placeholder="Workflow description"
-                          rows={3}
-                        />
-                      </div>
-                      <div className="flex gap-2">
-                        <Button type="submit" size="sm">Save</Button>
-                        <Button type="button" variant="secondary" size="sm" onClick={() => setEditingId(null)}>
-                          Cancel
-                        </Button>
-                      </div>
-                    </form>
-                  ) : (
-                    <>
-                      <div className="mb-2 text-lg font-semibold">{workflow.name}</div>
-                      <div className="mb-4 text-sm text-gray-600 dark:text-gray-300 line-clamp-3">{workflow.description}</div>
-                      <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400">
-                        <span>Created: {new Date(workflow.createdAt).toLocaleDateString()}</span>
-                        <div className="flex gap-1">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => startEditing(workflow)}
-                            aria-label="Edit workflow"
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleDeleteWorkflow(workflow.id)}
-                            aria-label="Delete workflow"
-                          >
-                            <Trash2 className="h-4 w-4 text-red-500" />
-                          </Button>
-                        </div>
-                      </div>
-                    </>
-                  )}
-                </motion.div>
-              ))}
-            </AnimatePresence>
-          </motion.div>
-        )}
+    <div className="w-full h-full overflow-auto p-6 max-w-7xl mx-auto">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold text-gray-800">Workflows</h1>
+        <Button onClick={openModalForAdd} className="bg-blue-600 hover:bg-blue-700 text-white">Add Workflow</Button>
       </div>
 
-      {/* Pagination Controls */}
-      {totalItems > 0 && (
-        <motion.div
-          className="flex flex-col items-center justify-between gap-4 border-t py-4 md:flex-row"
-          key="pagination"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-        >
-          <div className="text-sm text-gray-500 dark:text-gray-400">
-            Showing {startIndex + 1} to {Math.min(endIndex, totalItems)} of {totalItems} workflows
-          </div>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => handlePageChange(currentPage - 1)}
-              disabled={currentPage === 1}
-            >
-              Previous
-            </Button>
-            <div className="hidden sm:flex gap-1">
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
-                <Button
-                  key={page}
-                  variant={page === currentPage ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => handlePageChange(page)}
-                  className={page === currentPage ? "bg-gray-200 dark:bg-gray-700" : ""}
-                >
-                  {page}
-                </Button>
-              ))}
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => handlePageChange(currentPage + 1)}
-              disabled={currentPage === totalPages}
-            >
-              Next
-            </Button>
-            <select
-              value={itemsPerPage}
-              onChange={handleItemsPerPageChange}
-              className="rounded-md border bg-white p-2 text-sm dark:bg-gray-800"
-            >
-              <option value={3}>3 per page</option>
-              <option value={6}>6 per page</option>
-              <option value={9}>9 per page</option>
-              <option value={12}>12 per page</option>
-            </select>
-          </div>
-        </motion.div>
+      <div className="relative mb-6">
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+        <Input 
+          placeholder="Search workflows..." 
+          value={searchTerm} 
+          onChange={(e) => {
+            setSearchTerm(e.target.value);
+            setCurrentPage(1);
+          }}
+          className="pl-10"
+        />
+      </div>
+
+      {isLoading ? (
+        <div className="text-center py-10">Loading workflows...</div>
+      ) : error ? (
+        <div className="text-center py-10 text-red-500">{error}</div>
+      ) : filteredWorkflows.length === 0 ? (
+        <div className="text-center py-10">No workflows found.</div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <AnimatePresence mode="popLayout">
+            {currentWorkflows.map((workflow) => (
+              <motion.div
+                key={workflow.id}
+                layout
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                className="bg-white rounded-lg shadow p-6 hover:shadow-md transition-shadow"
+              >
+                <div className="flex justify-between items-start mb-2">
+                  <h2 className="text-xl font-semibold text-gray-800">{workflow.name}</h2>
+                  <div className="flex space-x-2">
+                    <Button variant="outline" size="sm" onClick={() => openModalForEdit(workflow)}>
+                      <Edit className="w-4 h-4" />
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={() => handleDeleteWorkflow(workflow.id)}>
+                      <Trash2 className="w-4 h-4 text-red-500" />
+                    </Button>
+                  </div>
+                </div>
+                <p className="text-gray-600 mb-2">{workflow.description}</p>
+                <p className="text-sm text-gray-500">Created: {new Date(workflow.createdAt).toLocaleDateString()}</p>
+              </motion.div>
+            ))}
+          </AnimatePresence>
+        </div>
       )}
+
+      {totalItems > 0 && (
+        <div className="flex justify-between items-center mt-6">
+          <Button 
+            variant="outline"
+            onClick={() => handlePageChange(currentPage - 1)}
+            disabled={currentPage === 1}
+          >
+            Previous
+          </Button>
+          <span>Page {currentPage} of {totalPages}</span>
+          <Button 
+            variant="outline"
+            onClick={() => handlePageChange(currentPage + 1)}
+            disabled={currentPage === totalPages}
+          >
+            Next
+          </Button>
+        </div>
+      )}
+
+      <AnimatePresence>
+        {isModalOpen && (
+          <motion.div 
+            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={closeModal}
+          >
+            <motion.div 
+              className="bg-white rounded-lg p-6 w-full max-w-md"
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: 20 }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <h2 className="text-xl font-bold mb-4">{isAdding ? 'Add New Workflow' : 'Edit Workflow'}</h2>
+              <form onSubmit={isAdding ? handleAddWorkflow : handleEditWorkflow}>
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                  <Input 
+                    value={isAdding ? newWorkflowName : editName} 
+                    onChange={(e) => isAdding ? setNewWorkflowName(e.target.value) : setEditName(e.target.value)} 
+                    placeholder="Workflow name" 
+                    required
+                  />
+                </div>
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                  <Textarea 
+                    value={isAdding ? newWorkflowDescription : editDescription} 
+                    onChange={(e) => isAdding ? setNewWorkflowDescription(e.target.value) : setEditDescription(e.target.value)} 
+                    placeholder="Workflow description" 
+                    rows={3}
+                  />
+                </div>
+                <div className="flex justify-end space-x-2">
+                  <Button type="button" variant="outline" onClick={closeModal}>Cancel</Button>
+                  <Button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white">{isAdding ? 'Add' : 'Save'}</Button>
+                </div>
+              </form>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

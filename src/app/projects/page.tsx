@@ -16,6 +16,7 @@ const ProjectsPage = () => {
   const [itemsPerPage, setItemsPerPage] = useState(6);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [isAdding, setIsAdding] = useState(false);
   const [newProjectName, setNewProjectName] = useState('');
   const [newProjectDescription, setNewProjectDescription] = useState('');
@@ -46,16 +47,27 @@ const ProjectsPage = () => {
     fetchProjects();
   }, []);
 
-  const filteredProjects = projects.filter(project =>
-    project.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    project.description.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const openModalForAdd = () => {
+    setIsAdding(true);
+    setNewProjectName('');
+    setNewProjectDescription('');
+    setNewProjectTeamId('');
+    setEditingId(null);
+    setIsModalOpen(true);
+  };
 
-  const totalPages = Math.ceil(filteredProjects.length / itemsPerPage);
-  const paginatedProjects = filteredProjects.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
+  const openModalForEdit = (project: Project) => {
+    setIsAdding(false);
+    setEditingId(project.id);
+    setEditName(project.name);
+    setEditDescription(project.description || '');
+    setEditTeamId(project.team_id ? project.team_id.toString() : '');
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+  };
 
   const handleAddProject = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -64,7 +76,7 @@ const ProjectsPage = () => {
     const newProject = {
       name: newProjectName,
       description: newProjectDescription,
-      team_id: newProjectTeamId,
+      team_id: newProjectTeamId ? parseInt(newProjectTeamId) : undefined,
     };
 
     try {
@@ -82,13 +94,42 @@ const ProjectsPage = () => {
 
       const addedProject = await response.json();
       setProjects([...projects, addedProject]);
-      setNewProjectName('');
-      setNewProjectDescription('');
-      setNewProjectTeamId('');
-      setIsAdding(false);
+      closeModal();
     } catch (err) {
       console.error(err);
       setError('Failed to add project. Please try again.');
+    }
+  };
+
+  const handleEditProject = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (editingId === null || !editName.trim()) return;
+
+    const updatedProject = {
+      name: editName,
+      description: editDescription,
+      team_id: editTeamId ? parseInt(editTeamId) : undefined,
+    };
+
+    try {
+      const response = await fetch(`/api/projects/${editingId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updatedProject),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update project');
+      }
+
+      const updatedData = await response.json();
+      setProjects(projects.map(p => p.id === editingId ? updatedData : p));
+      closeModal();
+    } catch (err) {
+      console.error(err);
+      setError('Failed to update project. Please try again.');
     }
   };
 
@@ -102,273 +143,143 @@ const ProjectsPage = () => {
         throw new Error('Failed to delete project');
       }
 
-      setProjects(projects.filter(project => project.id !== id));
+      setProjects(projects.filter(p => p.id !== id));
     } catch (err) {
       console.error(err);
       setError('Failed to delete project. Please try again.');
     }
   };
 
-  const handleEditProject = async (e: React.FormEvent, id: number) => {
-    e.preventDefault();
-    if (!editName.trim()) return;
+  const filteredProjects = projects.filter(project =>
+    project.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    project.description?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
-    const updatedProject = {
-      name: editName,
-      description: editDescription,
-      team_id: editTeamId,
-    };
-
-    try {
-      const response = await fetch(`/api/projects/${id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(updatedProject),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to update project');
-      }
-
-      const updated = await response.json();
-      setProjects(projects.map(project =>
-        project.id === id ? updated : project
-      ));
-      setEditingId(null);
-    } catch (err) {
-      console.error(err);
-      setError('Failed to update project. Please try again.');
-    }
-  };
-
-  const startEditing = (project: Project) => {
-    setEditingId(project.id);
-    setEditName(project.name);
-    setEditDescription(project.description);
-    setEditTeamId(project.team_id);
-  };
+  const totalPages = Math.ceil(filteredProjects.length / itemsPerPage);
+  const paginatedProjects = filteredProjects.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   return (
     <WorkflowsLayout>
-      <div className="w-full">
-        {/* Error Message */}
-        <AnimatePresence>
-          {error && (
-            <motion.div
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              className="rounded-md bg-red-50 p-4 text-red-700 dark:bg-red-900/20 dark:text-red-400"
-            >
-              {error}
-            </motion.div>
-          )}
-        </AnimatePresence>
+      <div className="w-full h-full overflow-auto p-6 max-w-7xl mx-auto">
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-2xl font-bold text-gray-800">Projects</h1>
+          <Button onClick={openModalForAdd} className="bg-blue-600 hover:bg-blue-700 text-white">Add Project</Button>
+        </div>
 
-        {/* Add Project Button */}
-        <motion.div
-          className="mb-6"
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-        >
-          <Button onClick={() => setIsAdding(true)} disabled={isAdding}>
-            New Project
-          </Button>
-        </motion.div>
-
-        {/* Add Project Form */}
-        <AnimatePresence>
-          {isAdding && (
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              className="mb-6 rounded-lg border bg-white p-4 shadow-sm dark:bg-gray-800"
-            >
-              <h2 className="mb-4 text-lg font-medium">Add New Project</h2>
-              <form onSubmit={handleAddProject} className="space-y-4">
-                <div>
-                  <Input
-                    placeholder="Project Name"
-                    value={newProjectName}
-                    onChange={(e) => setNewProjectName(e.target.value)}
-                    required
-                  />
-                </div>
-                <div>
-                  <Textarea
-                    placeholder="Project Description"
-                    value={newProjectDescription}
-                    onChange={(e) => setNewProjectDescription(e.target.value)}
-                    className="h-24"
-                  />
-                </div>
-                <div>
-                  <Input
-                    placeholder="Team ID"
-                    value={newProjectTeamId}
-                    onChange={(e) => setNewProjectTeamId(e.target.value)}
-                    required
-                  />
-                </div>
-                <div className="flex justify-end space-x-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setIsAdding(false)}
-                  >
-                    Cancel
-                  </Button>
-                  <Button type="submit">Add Project</Button>
-                </div>
-              </form>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Search Bar */}
-        <div className="mb-6 flex items-center space-x-2 rounded-lg border bg-white px-3 py-2 shadow-sm dark:bg-gray-800">
-          <Search className="h-5 w-5 text-gray-400" />
+        <div className="relative mb-6">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
           <Input
-            className="border-0"
             placeholder="Search projects..."
             value={searchTerm}
-            onChange={(e) => {
-              setSearchTerm(e.target.value);
-              setCurrentPage(1);
-            }}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10"
           />
         </div>
 
-        {/* Loading State */}
         {isLoading ? (
-          <div className="py-8 text-center">Loading projects...</div>
+          <div className="text-center py-10">Loading projects...</div>
+        ) : error ? (
+          <div className="text-center py-10 text-red-500">{error}</div>
         ) : filteredProjects.length === 0 ? (
-          <div className="rounded-lg border bg-white p-6 text-center shadow-sm dark:bg-gray-800">
-            <p className="text-gray-500 dark:text-gray-400">
-              {searchTerm ? 'No projects match your search.' : 'No projects available. Add one to get started.'}
-            </p>
-          </div>
+          <div className="text-center py-10">No projects found.</div>
         ) : (
-          <div className="space-y-4">
-            {paginatedProjects.map((project) => (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {paginatedProjects.map(project => (
               <motion.div
                 key={project.id}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="rounded-lg border bg-white p-4 shadow-sm dark:bg-gray-800"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-white rounded-lg shadow p-6 hover:shadow-md transition-shadow"
               >
-                {editingId === project.id ? (
-                  <form onSubmit={(e) => handleEditProject(e, project.id)} className="space-y-3">
-                    <div>
-                      <Input
-                        value={editName}
-                        onChange={(e) => setEditName(e.target.value)}
-                        required
-                      />
-                    </div>
-                    <div>
-                      <Textarea
-                        value={editDescription}
-                        onChange={(e) => setEditDescription(e.target.value)}
-                        className="h-20"
-                      />
-                    </div>
-                    <div>
-                      <Input
-                        value={editTeamId}
-                        onChange={(e) => setEditTeamId(e.target.value)}
-                        required
-                      />
-                    </div>
-                    <div className="flex justify-end space-x-2">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => setEditingId(null)}
-                      >
-                        Cancel
-                      </Button>
-                      <Button type="submit">Save</Button>
-                    </div>
-                  </form>
-                ) : (
-                  <div className="space-y-2">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <h3 className="font-medium">{project.name}</h3>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">Team ID: {project.team_id}</p>
-                      </div>
-                      <div className="flex space-x-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => startEditing(project)}
-                        >
-                          <Edit className="h-4 w-4 mr-1" /> Edit
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleDeleteProject(project.id)}
-                        >
-                          <Trash2 className="h-4 w-4 mr-1" /> Delete
-                        </Button>
-                      </div>
-                    </div>
-                    <p className="text-sm text-gray-600 dark:text-gray-300">{project.description}</p>
-                    <p className="text-xs text-gray-400 dark:text-gray-500">
-                      Created: {new Date(project.createdAt).toLocaleDateString()}
-                    </p>
+                <div className="flex justify-between items-start mb-2">
+                  <h2 className="text-xl font-semibold text-gray-800">{project.name}</h2>
+                  <div className="flex space-x-2">
+                    <Button variant="outline" size="sm" onClick={() => openModalForEdit(project)}>
+                      <Edit className="w-4 h-4" />
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={() => handleDeleteProject(project.id)}>
+                      <Trash2 className="w-4 h-4 text-red-500" />
+                    </Button>
                   </div>
-                )}
+                </div>
+                <p className="text-gray-600 mb-2">{project.description}</p>
+                <p className="text-sm text-gray-500">Team ID: {project.team_id || 'N/A'}</p>
+                <p className="text-sm text-gray-500">Created: {new Date(project.createdAt).toLocaleDateString()}</p>
               </motion.div>
             ))}
           </div>
         )}
 
-        {/* Pagination Controls */}
-        {filteredProjects.length > 0 && (
-          <div className="mt-6 flex flex-col items-center justify-between space-y-4 md:flex-row md:space-y-0">
-            <div className="flex items-center space-x-2">
-              <Button
-                onClick={() => setCurrentPage(currentPage - 1)}
-                disabled={currentPage === 1}
-                variant="outline"
+        <div className="flex justify-between items-center mt-6">
+          <Button
+            onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+            disabled={currentPage === 1}
+          >
+            Previous
+          </Button>
+          <span>Page {currentPage} of {totalPages}</span>
+          <Button
+            onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+            disabled={currentPage === totalPages}
+          >
+            Next
+          </Button>
+        </div>
+
+        <AnimatePresence>
+          {isModalOpen && (
+            <motion.div
+              className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={closeModal}
+            >
+              <motion.div
+                className="bg-white rounded-lg p-6 w-full max-w-md"
+                initial={{ scale: 0.9, y: 20 }}
+                animate={{ scale: 1, y: 0 }}
+                exit={{ scale: 0.9, y: 20 }}
+                onClick={(e) => e.stopPropagation()}
               >
-                Previous
-              </Button>
-              <span className="text-sm text-gray-500 dark:text-gray-400">
-                Page {currentPage} of {totalPages}
-              </span>
-              <Button
-                onClick={() => setCurrentPage(currentPage + 1)}
-                disabled={currentPage === totalPages}
-                variant="outline"
-              >
-                Next
-              </Button>
-            </div>
-            <div className="flex items-center space-x-2">
-              <span className="text-sm text-gray-500 dark:text-gray-400">Items per page:</span>
-              <select
-                value={itemsPerPage}
-                onChange={(e) => {
-                  setItemsPerPage(Number(e.target.value));
-                  setCurrentPage(1);
-                }}
-                className="rounded-md border bg-white p-2 text-sm dark:bg-gray-800"
-              >
-                <option value={3}>3</option>
-                <option value={6}>6</option>
-                <option value={9}>9</option>
-                <option value={12}>12</option>
-              </select>
-            </div>
-          </div>
-        )}
+                <h2 className="text-xl font-bold mb-4">{isAdding ? 'Add New Project' : 'Edit Project'}</h2>
+                <form onSubmit={isAdding ? handleAddProject : handleEditProject}>
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                    <Input
+                      value={isAdding ? newProjectName : editName}
+                      onChange={(e) => isAdding ? setNewProjectName(e.target.value) : setEditName(e.target.value)}
+                      placeholder="Project name"
+                      required
+                    />
+                  </div>
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                    <Textarea
+                      value={isAdding ? newProjectDescription : editDescription}
+                      onChange={(e) => isAdding ? setNewProjectDescription(e.target.value) : setEditDescription(e.target.value)}
+                      placeholder="Project description"
+                      rows={3}
+                    />
+                  </div>
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Team ID</label>
+                    <Input
+                      value={isAdding ? newProjectTeamId : editTeamId}
+                      onChange={(e) => isAdding ? setNewProjectTeamId(e.target.value) : setEditTeamId(e.target.value)}
+                      placeholder="Team ID (optional)"
+                      type="number"
+                    />
+                  </div>
+                  <div className="flex justify-end space-x-2">
+                    <Button type="button" variant="outline" onClick={closeModal}>Cancel</Button>
+                    <Button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white">{isAdding ? 'Add' : 'Save'}</Button>
+                  </div>
+                </form>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </WorkflowsLayout>
   );
