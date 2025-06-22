@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Search, Trash2, Edit } from "lucide-react";
+import { Search, Trash2, Edit, Plus, ChevronLeft, ChevronRight } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Project } from "@/types/project";
 import WorkflowsLayout from "../workflows/layout";
@@ -140,13 +140,13 @@ const ProjectsPage = () => {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to delete project');
+        throw new Error(`Failed to delete project: ${response.status} ${response.statusText}`);
       }
 
       setProjects(projects.filter(p => p.id !== id));
     } catch (err) {
-      console.error(err);
-      setError('Failed to delete project. Please try again.');
+      console.error('Delete error:', err);
+      setError(`Failed to delete project: ${err instanceof Error ? err.message : 'Unknown error'}`);
     }
   };
 
@@ -160,120 +160,187 @@ const ProjectsPage = () => {
 
   return (
     <WorkflowsLayout>
-      <div className="w-full h-full overflow-auto p-6 max-w-7xl mx-auto">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold text-gray-800">Projects</h1>
-          <Button onClick={openModalForAdd} className="bg-blue-600 hover:bg-blue-700 text-white">Add Project</Button>
+      <div className="w-full h-full overflow-auto p-6 max-w-7xl mx-auto bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
+        <div className="flex justify-between items-center mb-8">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-800 dark:text-white mb-1">Projects Dashboard</h1>
+            <p className="text-gray-500 dark:text-gray-400 text-sm">Manage your projects with ease</p>
+          </div>
+          <Button
+            onClick={openModalForAdd}
+            className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white transform transition-all duration-200 hover:scale-105"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Add Project
+          </Button>
         </div>
 
-        <div className="relative mb-6">
+        <div className="relative mb-8 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
           <Input
             placeholder="Search projects..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
+            className="pl-10 h-12 border-0 focus:ring-0 focus:border-gray-300 dark:focus:border-gray-600 text-gray-700 dark:text-gray-200 bg-transparent"
           />
         </div>
 
         {isLoading ? (
-          <div className="text-center py-10">Loading projects...</div>
+          <div className="text-center py-16 text-gray-500 dark:text-gray-400 animate-pulse">Loading projects...</div>
         ) : error ? (
-          <div className="text-center py-10 text-red-500">{error}</div>
+          <div className="text-center py-16 text-red-500 dark:text-red-400 bg-red-50 dark:bg-red-900/10 rounded-xl border border-red-100 dark:border-red-800">{error}</div>
         ) : filteredProjects.length === 0 ? (
-          <div className="text-center py-10">No projects found.</div>
+          <div className="text-center py-16 text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+            No projects found. {searchTerm ? 'Try different search terms.' : 'Create your first project to get started.'}
+          </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {paginatedProjects.map(project => (
               <motion.div
                 key={project.id}
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="bg-white rounded-lg shadow p-6 hover:shadow-md transition-shadow"
+                whileHover={{ y: -5, transition: { duration: 0.2 } }}
+                className="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden border border-gray-100 dark:border-gray-700 hover:shadow-lg transition-all duration-300"
               >
-                <div className="flex justify-between items-start mb-2">
-                  <h2 className="text-xl font-semibold text-gray-800">{project.name}</h2>
-                  <div className="flex space-x-2">
-                    <Button variant="outline" size="sm" onClick={() => openModalForEdit(project)}>
-                      <Edit className="w-4 h-4" />
-                    </Button>
-                    <Button variant="outline" size="sm" onClick={() => handleDeleteProject(project.id)}>
-                      <Trash2 className="w-4 h-4 text-red-500" />
-                    </Button>
+                <div className="p-6">
+                  <div className="flex justify-between items-start mb-3">
+                    <h2 className="text-xl font-bold text-gray-800 dark:text-white line-clamp-1">{project.name}</h2>
+                    <div className="flex space-x-2">
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => openModalForEdit(project)}
+                        className="h-8 w-8 border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
+                      >
+                        <Edit className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => handleDeleteProject(project.id)}
+                        className="h-8 w-8 border-gray-200 dark:border-gray-700 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+                  <p className="text-gray-600 dark:text-gray-400 text-sm mb-4 line-clamp-2 min-h-[2.5rem]">{project.description || 'No description provided'}</p>
+                  <div className="flex justify-between items-center text-xs text-gray-500 dark:text-gray-400 pt-2 border-t border-gray-100 dark:border-gray-700">
+                    <span>Team: {project.team_id || 'N/A'}</span>
+                    <span>Created: {new Date(project.createdAt).toLocaleDateString()}</span>
                   </div>
                 </div>
-                <p className="text-gray-600 mb-2">{project.description}</p>
-                <p className="text-sm text-gray-500">Team ID: {project.team_id || 'N/A'}</p>
-                <p className="text-sm text-gray-500">Created: {new Date(project.createdAt).toLocaleDateString()}</p>
               </motion.div>
             ))}
           </div>
         )}
 
-        <div className="flex justify-between items-center mt-6">
-          <Button
-            onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-            disabled={currentPage === 1}
-          >
-            Previous
-          </Button>
-          <span>Page {currentPage} of {totalPages}</span>
-          <Button
-            onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-            disabled={currentPage === totalPages}
-          >
-            Next
-          </Button>
+        <div className="flex justify-between items-center mt-8 flex-wrap gap-4">
+          <div className="flex items-center space-x-2 text-sm text-gray-500 dark:text-gray-400">
+            <span>Items per page:</span>
+            <select
+              value={itemsPerPage}
+              onChange={(e) => {
+                setItemsPerPage(parseInt(e.target.value));
+                setCurrentPage(1);
+              }}
+              className="rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 p-2"
+            >
+              <option value={3}>3</option>
+              <option value={6}>6</option>
+              <option value={9}>9</option>
+              <option value={12}>12</option>
+            </select>
+          </div>
+          <div className="flex items-center space-x-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+              disabled={currentPage === 1}
+              className="h-9 w-9 p-0 border-gray-200 dark:border-gray-700"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </Button>
+            <div className="text-sm text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 px-3 py-2 rounded-md border border-gray-200 dark:border-gray-700 min-w-[120px] text-center">
+              Page {currentPage} of {totalPages}
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+              disabled={currentPage === totalPages}
+              className="h-9 w-9 p-0 border-gray-200 dark:border-gray-700"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </Button>
+          </div>
         </div>
 
         <AnimatePresence>
           {isModalOpen && (
             <motion.div
-              className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+              className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 backdrop-blur-sm"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={closeModal}
             >
               <motion.div
-                className="bg-white rounded-lg p-6 w-full max-w-md"
-                initial={{ scale: 0.9, y: 20 }}
+                className="bg-white dark:bg-gray-800 rounded-2xl p-6 w-full max-w-md shadow-2xl mx-4 border border-gray-100 dark:border-gray-700"
+                initial={{ scale: 0.95, y: 20 }}
                 animate={{ scale: 1, y: 0 }}
-                exit={{ scale: 0.9, y: 20 }}
+                exit={{ scale: 0.95, y: 20 }}
                 onClick={(e) => e.stopPropagation()}
               >
-                <h2 className="text-xl font-bold mb-4">{isAdding ? 'Add New Project' : 'Edit Project'}</h2>
-                <form onSubmit={isAdding ? handleAddProject : handleEditProject}>
-                  <div className="mb-4">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                <h2 className="text-2xl font-bold mb-6 text-gray-800 dark:text-white">{isAdding ? 'Create New Project' : 'Edit Project'}</h2>
+                <form onSubmit={isAdding ? handleAddProject : handleEditProject} className="space-y-5">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Project Name <span className="text-red-500">*</span></label>
                     <Input
                       value={isAdding ? newProjectName : editName}
                       onChange={(e) => isAdding ? setNewProjectName(e.target.value) : setEditName(e.target.value)}
-                      placeholder="Project name"
+                      placeholder="Enter project name"
                       required
+                      className="h-10 border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-blue-500 dark:bg-gray-900"
                     />
                   </div>
-                  <div className="mb-4">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Description</label>
                     <Textarea
                       value={isAdding ? newProjectDescription : editDescription}
                       onChange={(e) => isAdding ? setNewProjectDescription(e.target.value) : setEditDescription(e.target.value)}
-                      placeholder="Project description"
+                      placeholder="Describe your project"
                       rows={3}
+                      className="border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-blue-500 dark:bg-gray-900"
                     />
                   </div>
-                  <div className="mb-4">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Team ID</label>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Team ID</label>
                     <Input
                       value={isAdding ? newProjectTeamId : editTeamId}
                       onChange={(e) => isAdding ? setNewProjectTeamId(e.target.value) : setEditTeamId(e.target.value)}
-                      placeholder="Team ID (optional)"
+                      placeholder="Optional team ID"
                       type="number"
+                      className="h-10 border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-blue-500 dark:bg-gray-900"
                     />
                   </div>
-                  <div className="flex justify-end space-x-2">
-                    <Button type="button" variant="outline" onClick={closeModal}>Cancel</Button>
-                    <Button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white">{isAdding ? 'Add' : 'Save'}</Button>
+                  <div className="flex justify-end space-x-3 pt-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={closeModal}
+                      className="border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      type="submit"
+                      className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white"
+                    >
+                      {isAdding ? 'Create Project' : 'Save Changes'}
+                    </Button>
                   </div>
                 </form>
               </motion.div>
