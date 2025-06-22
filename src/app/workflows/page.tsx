@@ -111,9 +111,10 @@ const WorkflowsPage = () => {
           status: 'draft'
         }),
       });
-
+      
       if (!response.ok) {
-        throw new Error(`Failed to create workflow: ${response.status} ${response.statusText}`);
+        const errorText = await response.text();
+        throw new Error(`Failed to create workflow: ${response.status} ${response.statusText} - ${errorText}`);
       }
 
       const addedWorkflow = await response.json();
