@@ -10,15 +10,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Workflow } from "@/types/workflow";
 import { useOrganization } from "@/context/OrganizationContext";
 
-interface Workflow {
-  id: number;
-  project_id: number;
-  name: string;
-  description: string;
-  status: string;
-  created_at: string;
-}
-
 const WorkflowsPage = () => {
   const router = useRouter();
   const { selectedOrganization } = useOrganization();
@@ -77,7 +68,7 @@ const WorkflowsPage = () => {
     setIsAdding(false);
     setEditingId(workflow.id);
     setEditName(workflow.name);
-    setEditDescription(workflow.description);
+    setEditDescription(workflow.description || '');
     setIsModalOpen(true);
   };
 
@@ -111,7 +102,7 @@ const WorkflowsPage = () => {
           status: 'draft'
         }),
       });
-      
+
       if (!response.ok) {
         const errorText = await response.text();
         throw new Error(`Failed to create workflow: ${response.status} ${response.statusText} - ${errorText}`);
@@ -190,7 +181,7 @@ const WorkflowsPage = () => {
   // Filtering and pagination
   const filteredWorkflows = workflows.filter(workflow =>
     workflow.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    workflow.description.toLowerCase().includes(searchTerm.toLowerCase())
+    (workflow.description || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const totalItems = filteredWorkflows.length;
@@ -281,7 +272,7 @@ const WorkflowsPage = () => {
                   </div>
                   <p className="text-gray-600 dark:text-gray-400 text-sm mb-4 line-clamp-2 min-h-[2.5rem]">{workflow.description || 'No description provided'}</p>
                   <div className="text-xs text-gray-500 dark:text-gray-400 pt-2 border-t border-gray-100 dark:border-gray-700">
-                    Created: {new Date(workflow.created_at).toLocaleDateString()}
+                    Created: {workflow.created_at ? new Date(workflow.created_at).toLocaleDateString() : 'N/A'}
                   </div>
                 </div>
               </motion.div>
