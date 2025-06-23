@@ -276,16 +276,6 @@ const WorkflowEditor = () => {
               transition={{ type: 'spring', stiffness: 300, damping: 30, delay: 0.4 }}
             >
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => router.push("/workflows")}
-                  className="ml-2"
-                >
-                  <CornerDownLeft className="h-4 w-4" />
-                </Button>
-              </motion.div>
-              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                 <Button variant="outline" size="sm" className="h-8 px-2 text-xs font-medium bg-white/80 backdrop-blur-sm" onClick={() => setShowGrid(!showGrid)}>
                   <Grid className="w-3.5 h-3.5 mr-1.5" />
                   {showGrid ? 'Hide Grid' : 'Show Grid'}

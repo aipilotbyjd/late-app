@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from "next/navigation";
+import axios from 'axios';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -9,6 +10,52 @@ import { Search, Trash2, Edit, Plus, ChevronLeft, ChevronRight } from "lucide-re
 import { motion, AnimatePresence } from "framer-motion";
 import { Workflow } from "@/types/workflow";
 import { useOrganization } from "@/context/OrganizationContext";
+
+// Create axios instance with base config
+const api = axios.create({
+  baseURL: 'http://late-api.test/api/v1',
+  headers: {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json',
+    'X-Requested-With': 'XMLHttpRequest',
+  },
+  withCredentials: true
+});
+
+// Add request interceptor to include auth token
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
+// Add response interceptor for error handling
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response) {
+      // The request was made and the server responded with a status code
+      // that falls out of the range of 2xx
+      console.error('API Error Response:', error.response.data);
+      console.error('Status:', error.response.status);
+      console.error('Headers:', error.response.headers);
+    } else if (error.request) {
+      // The request was made but no response was received
+      console.error('API Request Error:', error.request);
+    } else {
+      // Something happened in setting up the request that triggered an Error
+      console.error('API Error:', error.message);
+    }
+    return Promise.reject(error);
+  }
+);
 
 const WorkflowsPage = () => {
   const router = useRouter();
@@ -32,22 +79,14 @@ const WorkflowsPage = () => {
       setIsLoading(true);
       setError(null);
       try {
-        const response = await fetch('http://late-api.test/api/v1/workflows', {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
-          }
-        });
-        if (!response.ok) {
-          throw new Error(`Failed to fetch workflows: ${response.status} ${response.statusText}`);
-        }
-        const data = await response.json();
-        setWorkflows(data.data || []);
+        const response = await api.get('/workflows');
+        setWorkflows(response.data.data || []);
       } catch (err) {
-        setError(`Failed to load workflows: ${err instanceof Error ? err.message : "Unknown error"}`);
-        console.error(err);
+        const errorMessage = axios.isAxiosError(err)
+          ? `Failed to load workflows: ${err.response?.data?.message || err.message}`
+          : `Failed to load workflows: ${err instanceof Error ? err.message : 'Unknown error'}`;
+        setError(errorMessage);
+        console.error('Error fetching workflows:', err);
       } finally {
         setIsLoading(false);
       }
@@ -76,47 +115,83 @@ const WorkflowsPage = () => {
     setIsModalOpen(false);
   };
 
-  const handleAddWorkflow = async () => {
+  const handleAddWorkflow = async (e: React.FormEvent) => {
+    e.preventDefault();
     if (!newWorkflowName.trim()) {
       setError('Workflow name is required');
       return;
     }
 
+    if (!selectedOrganization?.id) {
+      setError('Please select an organization before creating a workflow');
+      return;
+    }
+
+    const workflowData = {
+      organization_id: selectedOrganization.id,
+      name: newWorkflowName,
+      description: newWorkflowDescription || '',
+      workflow_json: {
+        nodes: [],
+        edges: []
+      },
+      status: 'draft'
+    };
+
+    console.log('Sending workflow data:', workflowData);
+    console.log('Auth token:', localStorage.getItem('token'));
+
     try {
       setIsAdding(true);
-      const response = await fetch('http://late-api.test/api/v1/workflows', {
-        method: 'POST',
+      const response = await api.post('/workflows', workflowData, {
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest',
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         },
-        body: JSON.stringify({
-          organization_id: selectedOrganization?.id || null,
-          name: newWorkflowName,
-          description: newWorkflowDescription || '',
-          workflow_json: {
-            nodes: [],
-            edges: []
-          },
-          status: 'draft'
-        }),
+        withCredentials: true
       });
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Failed to create workflow: ${response.status} ${response.statusText} - ${errorText}`);
-      }
+      console.log('Workflow created successfully:', response.data);
 
-      const addedWorkflow = await response.json();
+      const addedWorkflow = response.data;
       setWorkflows([...workflows, addedWorkflow]);
       closeModal();
       setNewWorkflowName('');
       setNewWorkflowDescription('');
-      router.push(`/workflows/editor?id=${addedWorkflow.id}`);
-    } catch (err) {
-      console.error(err);
-      setError(err instanceof Error ? err.message : 'Failed to create workflow');
+      router.push(`/workflows/editor/${addedWorkflow.id}`);
+    } catch (err: any) {
+      console.error('Detailed error:', {
+        message: err.message,
+        response: err.response?.data,
+        status: err.response?.status,
+        headers: err.response?.headers,
+        config: err.config
+      });
+
+      let errorMessage = 'Failed to create workflow';
+
+      if (axios.isAxiosError(err)) {
+        if (err.response) {
+          // Server responded with an error status code
+          errorMessage = err.response.data?.message ||
+            `Server responded with status ${err.response.status}`;
+        } else if (err.request) {
+          // Request was made but no response received
+          errorMessage = 'No response from server. Please check your connection.';
+          if (err.message === 'Network Error') {
+            errorMessage += ' This is likely a CORS issue. Make sure the backend is properly configured.';
+          }
+        } else {
+          // Something else happened
+          errorMessage = `Request setup error: ${err.message}`;
+        }
+      } else if (err instanceof Error) {
+        errorMessage = err.message;
+      }
+
+      setError(errorMessage);
     } finally {
       setIsAdding(false);
     }
@@ -124,22 +199,14 @@ const WorkflowsPage = () => {
 
   const handleDeleteWorkflow = async (id: number) => {
     try {
-      const response = await fetch(`http://late-api.test/api/v1/workflows/${id}`, {
-        method: 'DELETE',
-        headers: {
-          'Accept': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error(`Failed to delete workflow: ${response.status} ${response.statusText}`);
-      }
-
+      await api.delete(`/workflows/${id}`);
       setWorkflows(workflows.filter(workflow => workflow.id !== id));
     } catch (err) {
-      console.error('Delete error:', err);
-      setError(`Failed to delete workflow: ${err instanceof Error ? err.message : 'Unknown error'}`);
+      const errorMessage = axios.isAxiosError(err)
+        ? `Failed to delete workflow: ${err.response?.data?.message || err.message}`
+        : `Failed to delete workflow: ${err instanceof Error ? err.message : 'Unknown error'}`;
+      setError(errorMessage);
+      console.error('Error deleting workflow:', err);
     }
   };
 
@@ -147,34 +214,22 @@ const WorkflowsPage = () => {
     e.preventDefault();
     if (editingId === null || !editName.trim()) return;
 
-    const updatedWorkflow = {
-      name: editName,
-      description: editDescription,
-    };
-
     try {
-      const response = await fetch(`http://late-api.test/api/v1/workflows/${editingId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify(updatedWorkflow),
+      const response = await api.put(`/workflows/${editingId}`, {
+        name: editName,
+        description: editDescription,
       });
 
-      if (!response.ok) {
-        throw new Error(`Failed to update workflow: ${response.status} ${response.statusText}`);
-      }
-
-      const updated = await response.json();
       setWorkflows(workflows.map(workflow =>
-        workflow.id === editingId ? updated : workflow
+        workflow.id === editingId ? response.data : workflow
       ));
       closeModal();
     } catch (err) {
-      console.error('Update error:', err);
-      setError(`Failed to update workflow: ${err instanceof Error ? err.message : 'Unknown error'}`);
+      const errorMessage = axios.isAxiosError(err)
+        ? `Failed to update workflow: ${err.response?.data?.message || err.message}`
+        : `Failed to update workflow: ${err instanceof Error ? err.message : 'Unknown error'}`;
+      setError(errorMessage);
+      console.error('Error updating workflow:', err);
     }
   };
 
@@ -278,6 +333,34 @@ const WorkflowsPage = () => {
               </motion.div>
             ))}
           </AnimatePresence>
+        </div>
+      )}
+
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between mt-8">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+            disabled={currentPage === 1}
+            className="gap-1"
+          >
+            <ChevronLeft className="h-4 w-4" />
+            Previous
+          </Button>
+          <div className="text-sm text-gray-600 dark:text-gray-400">
+            Page {currentPage} of {totalPages}
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+            disabled={currentPage === totalPages}
+            className="gap-1"
+          >
+            Next
+            <ChevronRight className="h-4 w-4" />
+          </Button>
         </div>
       )}
 
