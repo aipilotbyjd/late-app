@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Search, Trash2, Edit, Plus, ChevronLeft, ChevronRight } from "lucide-react";
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { motion, AnimatePresence } from "framer-motion";
 import { Workflow } from "@/types/workflow";
 import { useOrganization } from "@/context/OrganizationContext";
@@ -258,19 +259,14 @@ const WorkflowsPage = () => {
     <div className="w-full h-full overflow-auto p-6 max-w-7xl mx-auto bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-gray-800 dark:text-white mb-1">Workflows Dashboard</h1>
-          <p className="text-gray-500 dark:text-gray-400 text-sm">Streamline your processes</p>
+          <h1 className="text-3xl font-extrabold bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-transparent bg-clip-text tracking-tight">
+            Workflows
+          </h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400">Manage and automate your processes</p>
         </div>
-        <Button
-          onClick={openModalForAdd}
-          className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white transform transition-all duration-200 hover:scale-105"
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Add Workflow
-        </Button>
       </div>
 
-      <div className="relative mb-8 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+      <div className="relative mb-8 bg-white/60 dark:bg-gray-900/50 backdrop-blur-lg rounded-full shadow-inner border border-white/40 dark:border-gray-700 overflow-hidden">
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
         <Input
           placeholder="Search workflows..."
@@ -279,7 +275,7 @@ const WorkflowsPage = () => {
             setSearchTerm(e.target.value);
             setCurrentPage(1);
           }}
-          className="pl-10 h-12 border-0 focus:ring-0 focus:border-gray-300 dark:focus:border-gray-600 text-gray-700 dark:text-gray-200 bg-transparent"
+          className="pl-10 h-12 bg-transparent border-0 focus:ring-0 text-gray-700 dark:text-gray-200 placeholder-gray-500 dark:placeholder-gray-400"
         />
       </div>
 
@@ -301,28 +297,38 @@ const WorkflowsPage = () => {
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 whileHover={{ y: -5, transition: { duration: 0.2 } }}
-                className="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden border border-gray-100 dark:border-gray-700 hover:shadow-lg transition-all duration-300"
+                className="bg-white/60 dark:bg-gray-900/60 backdrop-blur-lg rounded-2xl shadow-lg overflow-hidden border border-white/40 dark:border-gray-700 hover:shadow-2xl transition-all duration-300"
               >
                 <div className="p-6">
                   <div className="flex justify-between items-start mb-3">
                     <h2 className="text-xl font-bold text-gray-800 dark:text-white line-clamp-1">{workflow.name}</h2>
                     <div className="flex space-x-2">
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={() => openModalForEdit(workflow)}
-                        className="h-8 w-8 border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
-                      >
-                        <Edit className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={() => handleDeleteWorkflow(workflow.id)}
-                        className="h-8 w-8 border-gray-200 dark:border-gray-700 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            onClick={() => openModalForEdit(workflow)}
+                            className="h-8 w-8 border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 bg-white/50 dark:bg-gray-800/40 hover:bg-white/70 dark:hover:bg-gray-800/60"
+                          >
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>Edit</TooltipContent>
+                      </Tooltip>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            onClick={() => handleDeleteWorkflow(workflow.id)}
+                            className="h-8 w-8 border-gray-200 dark:border-gray-700 text-red-500 bg-white/50 dark:bg-gray-800/40 hover:bg-red-50 dark:hover:bg-red-900/20"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>Delete</TooltipContent>
+                      </Tooltip>
                     </div>
                   </div>
                   <p className="text-gray-600 dark:text-gray-400 text-sm mb-4 line-clamp-2 min-h-[2.5rem]">{workflow.description || 'No description provided'}</p>
@@ -402,6 +408,15 @@ const WorkflowsPage = () => {
           </Button>
         </div>
       </div>
+
+      {/* Floating Action Button */}
+      <Button
+        onClick={openModalForAdd}
+        size="icon"
+        className="fixed bottom-6 right-6 md:bottom-8 md:right-8 h-14 w-14 rounded-full bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-600 text-white shadow-xl hover:scale-105 active:scale-95 transition-transform z-40"
+      >
+        <Plus className="h-6 w-6" />
+      </Button>
 
       <AnimatePresence>
         {isModalOpen && (
